@@ -7,13 +7,15 @@ import HomePage from "./pages/HomePage";
 import MenuPage from "./pages/MenuPage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
+import DashboardPage from "./pages/DashboardPage";
 
 export default function App() {
   const location = useLocation();
   const hideSharedFooter =
     location.pathname === "/menu" ||
     location.pathname === "/register" ||
-    location.pathname === "/login";
+    location.pathname === "/login" ||
+    location.pathname === "/dashboard";
 
   return (
     <div className="min-h-screen">
@@ -21,6 +23,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/menu" element={<MenuPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
       </Routes>

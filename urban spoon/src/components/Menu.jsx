@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 
 const tabs = ["Breakfast", "Lunch", "Dinner", "Drinks", "Dessert"];
 const tabSectionMap = {
@@ -9,343 +9,6 @@ const tabSectionMap = {
   Dessert: ["dessert"],
 };
 
-const sections = [
-  {
-    id: "morning",
-    title: "Morning Favorites",
-    icon: "sun",
-    items: [
-      {
-        name: "Avocado Smash",
-        price: "$16",
-        description:
-          "Sourdough, chili flakes, heirloom tomatoes, and organic radish.",
-        badge: "Served Until 11 AM",
-        badgeTheme: "pink",
-        image:
-          "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Buttermilk Stack",
-        price: "$14",
-        description:
-          "Triple stack with Grade A maple syrup and seasonal berries.",
-        badge: "Bestseller",
-        badgeTheme: "pink",
-        image:
-          "https://images.unsplash.com/photo-1528207776546-365bb710ee93?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Mediterranean Omelette",
-        price: "$15",
-        description:
-          "Free-range eggs, feta, spinach, olives, and roasted peppers.",
-        badge: "Protein Rich",
-        badgeTheme: "blue",
-        image:
-          "https://images.unsplash.com/photo-1510693206972-df098062cb71?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Cinnamon Brioche Toast",
-        price: "$13",
-        description:
-          "Thick-cut brioche, mascarpone cream, caramelized banana, and pecans.",
-        badge: "Sweet Pick",
-        badgeTheme: "pink",
-        image:
-          "https://images.unsplash.com/photo-1484723091739-30a097e8f929?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Berry Yogurt Parfait",
-        price: "$11",
-        description:
-          "Greek yogurt, house granola, chia seeds, and macerated berries.",
-        badge: "Light Start",
-        badgeTheme: "green",
-        image:
-          "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Breakfast Burrito",
-        price: "$16",
-        description:
-          "Scrambled eggs, turkey sausage, hash browns, cheddar, and salsa verde.",
-        badge: "Hearty",
-        badgeTheme: "blue",
-        image:
-          "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=900&q=80",
-      },
-    ],
-  },
-  {
-    id: "midday",
-    title: "Midday Bites",
-    icon: "burger",
-    items: [
-      {
-        name: "Zen Garden Bowl",
-        price: "$18",
-        description:
-          "Quinoa, roasted chickpeas, kale, tahini dressing, and lemon.",
-        badge: "Vegan",
-        badgeTheme: "green",
-        image:
-          "https://images.unsplash.com/photo-1546793665-c74683f339c1?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "The Urban Burger",
-        price: "$22",
-        description:
-          "Grass-fed wagyu, aged cheddar, secret sauce, on a brioche bun.",
-        badge: "Chef's Choice",
-        badgeTheme: "pink",
-        image:
-          "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Smoked Chicken Panini",
-        price: "$19",
-        description:
-          "Ciabatta, smoked chicken, mozzarella, pesto, and tomato jam.",
-        badge: "House Favorite",
-        badgeTheme: "pink",
-        image:
-          "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Harvest Pasta Salad",
-        price: "$17",
-        description:
-          "Gemelli, roasted squash, arugula, goat cheese, and basil vinaigrette.",
-        badge: "Fresh",
-        badgeTheme: "green",
-        image:
-          "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Paneer Tikka Wrap",
-        price: "$19",
-        description:
-          "Charred paneer, mint chutney, pickled onions, and crunchy salad in naan.",
-        badge: "Indian Favorite",
-        badgeTheme: "pink",
-        image:
-          "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Roasted Tomato Flatbread",
-        price: "$18",
-        description:
-          "Wood-fired flatbread, burrata, blistered tomatoes, and basil oil.",
-        badge: "Vegetarian",
-        badgeTheme: "green",
-        image:
-          "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=900&q=80",
-      },
-    ],
-  },
-  {
-    id: "evening",
-    title: "Evening Specialties",
-    icon: "moon",
-    items: [
-      {
-        name: "Wild Atlantic Salmon",
-        price: "$32",
-        description:
-          "Pan-seared, asparagus, purple potato mash, citrus glaze.",
-        badge: "Gluten Free",
-        badgeTheme: "blue",
-        image:
-          "https://images.unsplash.com/photo-1485921325833-c519f76c4927?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Truffle Tagliatelle",
-        price: "$28",
-        description:
-          "Fresh handmade pasta, wild mushrooms, white truffle oil, parm.",
-        badge: "Premium",
-        badgeTheme: "pink",
-        image:
-          "https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Charred Ribeye",
-        price: "$36",
-        description:
-          "12oz ribeye, rosemary butter, crispy shallots, and herb potatoes.",
-        badge: "Signature",
-        badgeTheme: "pink",
-        image:
-          "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Lemon Herb Risotto",
-        price: "$26",
-        description:
-          "Creamy arborio rice, grilled zucchini, parmesan, and citrus zest.",
-        badge: "Vegetarian",
-        badgeTheme: "green",
-        image:
-          "https://images.unsplash.com/photo-1476124369491-e7addf5db371?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Braised Lamb Shank",
-        price: "$34",
-        description:
-          "Slow-braised lamb, saffron couscous, roasted carrots, and jus.",
-        badge: "Slow Cooked",
-        badgeTheme: "pink",
-        image:
-          "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Miso Glazed Cod",
-        price: "$31",
-        description:
-          "Black cod, sesame greens, jasmine rice, and ginger soy glaze.",
-        badge: "Seafood",
-        badgeTheme: "blue",
-        image:
-          "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=900&q=80",
-      },
-    ],
-  },
-  {
-    id: "drinks",
-    title: "Signature Drinks",
-    icon: "sun",
-    items: [
-      {
-        name: "Mango Lassi",
-        price: "$9",
-        description:
-          "Creamy yogurt blend with ripe mango puree, cardamom, and saffron.",
-        badge: "Indian Classic",
-        badgeTheme: "pink",
-        image:
-          "https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Cold Brew Tonic",
-        price: "$8",
-        description:
-          "Single-origin cold brew, tonic water, orange peel, and rosemary.",
-        badge: "Refreshing",
-        badgeTheme: "blue",
-        image:
-          "https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Rose Lemon Spritz",
-        price: "$10",
-        description:
-          "Sparkling citrus cooler with rose syrup, basil, and crushed ice.",
-        badge: "Floral",
-        badgeTheme: "pink",
-        image:
-          "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Masala Chai",
-        price: "$7",
-        description:
-          "Slow-brewed black tea with milk, ginger, cinnamon, and clove.",
-        badge: "Warm Favorite",
-        badgeTheme: "blue",
-        image:
-          "https://images.unsplash.com/photo-1571934811356-5cc061b6821f?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Cucumber Mint Cooler",
-        price: "$8",
-        description:
-          "Fresh cucumber, mint, lime juice, and soda for a crisp finish.",
-        badge: "Fresh",
-        badgeTheme: "green",
-        image:
-          "https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Lychee Mint Fizz",
-        price: "$9",
-        description:
-          "Lychee nectar, mint leaves, lime, and sparkling soda over ice.",
-        badge: "Tropical",
-        badgeTheme: "green",
-        image:
-          "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=900&q=80",
-      },
-    ],
-  },
-  {
-    id: "dessert",
-    title: "Dessert Favorites",
-    icon: "moon",
-    items: [
-      {
-        name: "Gulab Jamun Cheesecake",
-        price: "$12",
-        description:
-          "Silky baked cheesecake topped with gulab jamun and rose syrup.",
-        badge: "Indian Fusion",
-        badgeTheme: "pink",
-        image:
-          "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Chocolate Lava Cake",
-        price: "$11",
-        description:
-          "Warm chocolate cake with molten center and vanilla bean ice cream.",
-        badge: "Bestseller",
-        badgeTheme: "pink",
-        image:
-          "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Pistachio Kulfi",
-        price: "$10",
-        description:
-          "Traditional frozen milk dessert with pistachio, cardamom, and saffron.",
-        badge: "Chilled",
-        badgeTheme: "blue",
-        image:
-          "https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Berry Panna Cotta",
-        price: "$10",
-        description:
-          "Vanilla panna cotta finished with macerated berries and mint.",
-        badge: "Light",
-        badgeTheme: "green",
-        image:
-          "https://images.unsplash.com/photo-1488477304112-4944851de03d?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Tiramisu Jar",
-        price: "$9",
-        description:
-          "Espresso-soaked sponge, mascarpone cream, and cocoa in a glass jar.",
-        badge: "Coffee Lover",
-        badgeTheme: "blue",
-        image:
-          "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=900&q=80",
-      },
-      {
-        name: "Caramel Apple Tart",
-        price: "$11",
-        description:
-          "Buttery tart shell with cinnamon apples and salted caramel glaze.",
-        badge: "Seasonal",
-        badgeTheme: "pink",
-        image:
-          "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&w=900&q=80",
-      },
-    ],
-  },
-];
 
 function SearchIcon() {
   return (
@@ -453,6 +116,40 @@ export default function Menu() {
   const [searchQuery, setSearchQuery] = useState("");
   const [cartOpen, setCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState([]);
+  const [sections, setSections] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:3000/api/menu")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          const groupedData = data.reduce((acc, item) => {
+            const cat = item.category || "Breakfast";
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push({
+              name: item.name,
+              price: typeof item.price === "number" ? `$${item.price}` : item.price,
+              description: item.description,
+              image: item.image || "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?auto=format&fit=crop&w=900&q=80",
+              badge: "New",
+              badgeTheme: "green"
+            });
+            return acc;
+          }, {});
+
+          const newSections = [
+            { id: "morning", title: "Morning Favorites", icon: "sun", items: groupedData["Breakfast"] || [] },
+            { id: "midday", title: "Midday Bites", icon: "burger", items: groupedData["Lunch"] || [] },
+            { id: "evening", title: "Evening Specialties", icon: "moon", items: groupedData["Dinner"] || [] },
+            { id: "drinks", title: "Signature Drinks", icon: "sun", items: groupedData["Drinks"] || [] },
+            { id: "dessert", title: "Dessert Favorites", icon: "moon", items: groupedData["Dessert"] || [] },
+          ].filter((s) => s.items.length > 0);
+
+          setSections(newSections);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch backend menu:", err));
+  }, []);
 
   const filteredSections = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -470,7 +167,7 @@ export default function Menu() {
           : section.items,
       }))
       .filter((section) => section.items.length > 0);
-  }, [activeTab, searchQuery]);
+  }, [activeTab, searchQuery, sections]);
 
   const cartTotal = cartItems.reduce((total, item) => total + item.priceValue * item.quantity, 0);
 

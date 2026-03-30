@@ -1,5 +1,5 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const perks = [
   {
@@ -123,6 +123,62 @@ function SectionIcon({ type }) {
 }
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    agreeToTerms: false,
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!formData.name || !formData.email || !formData.password) {
+      return setError("Please fill out all required fields.");
+    }
+    if (formData.password !== formData.confirmPassword) {
+      return setError("Passwords do not match.");
+    }
+    if (!formData.agreeToTerms) {
+      return setError("You must agree to the Terms of Service.");
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch("http://localhost:3000/api/users/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Registration failed.");
+      }
+
+      navigate("/login");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main
       className="min-h-screen text-[#10182f]"
@@ -165,7 +221,13 @@ export default function RegisterPage() {
               <p className="leading-[1.6] text-[#65728e]">Start your culinary journey with us today.</p>
             </div>
 
-            <form className="grid gap-4">
+            <form className="grid gap-4" onSubmit={handleSubmit}>
+              {error && (
+                <div className="rounded-[0.5rem] bg-[#ffe3ea] px-4 py-3 text-[0.95rem] font-semibold text-[#ef2c5b]">
+                  {error}
+                </div>
+              )}
+
               <label className="grid gap-2">
                 <span className="text-[0.95rem] font-semibold text-[#111a31]">Full Name</span>
                 <div className="flex min-h-[3.625rem] items-center gap-3 rounded-[0.875rem] border border-[#dce3f0] bg-white px-4">
@@ -175,7 +237,11 @@ export default function RegisterPage() {
                   <input
                     className="w-full border-0 bg-transparent text-[0.98rem] text-[#22304f] outline-none placeholder:text-[#7f8ba4]"
                     type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
                     placeholder="John Doe"
+                    required
                   />
                 </div>
               </label>
@@ -189,7 +255,11 @@ export default function RegisterPage() {
                   <input
                     className="w-full border-0 bg-transparent text-[0.98rem] text-[#22304f] outline-none placeholder:text-[#7f8ba4]"
                     type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
                     placeholder="john@example.com"
+                    required
                   />
                 </div>
               </label>
@@ -204,7 +274,11 @@ export default function RegisterPage() {
                     <input
                       className="w-full border-0 bg-transparent text-[0.98rem] text-[#22304f] outline-none placeholder:text-[#7f8ba4]"
                       type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
                       placeholder="........"
+                      required
                     />
                   </div>
                 </label>
@@ -218,14 +292,24 @@ export default function RegisterPage() {
                     <input
                       className="w-full border-0 bg-transparent text-[0.98rem] text-[#22304f] outline-none placeholder:text-[#7f8ba4]"
                       type="password"
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
                       placeholder="........"
+                      required
                     />
                   </div>
                 </label>
               </div>
 
               <label className="flex items-start gap-3 text-[#6d7891]">
-                <input className="m-0 h-5 w-5" type="checkbox" />
+                <input
+                  className="m-0 mt-[0.15rem] h-[1.15rem] w-[1.15rem] shrink-0 cursor-pointer accent-[#ef2c5b]"
+                  type="checkbox"
+                  name="agreeToTerms"
+                  checked={formData.agreeToTerms}
+                  onChange={handleChange}
+                />
                 <span>
                   I agree to the <a className="text-[#ef2c5b] no-underline" href="#terms">Terms of Service</a> and{" "}
                   <a className="text-[#ef2c5b] no-underline" href="#privacy">Privacy Policy</a>
@@ -233,10 +317,11 @@ export default function RegisterPage() {
               </label>
 
               <button
-                className="min-h-16 rounded-[0.875rem] bg-[#ef2c5b] text-base font-bold text-white shadow-[0_16px_28px_rgba(239,44,91,0.24)]"
+                className="min-h-16 rounded-[0.875rem] bg-[#ef2c5b] text-base font-bold text-white shadow-[0_16px_28px_rgba(239,44,91,0.24)] disabled:opacity-70 disabled:cursor-not-allowed"
                 type="submit"
+                disabled={loading}
               >
-                Create Account
+                {loading ? "Creating Account..." : "Create Account"}
               </button>
 
               <p className="text-center text-[#5d6985]">

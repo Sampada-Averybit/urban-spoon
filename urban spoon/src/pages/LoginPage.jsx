@@ -1,5 +1,5 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 function BrandIcon() {
   return (
@@ -72,6 +72,56 @@ function SendIcon() {
 }
 
 export default function LoginPage() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    rememberMe: false,
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!formData.email || !formData.password) {
+      return setError("Please fill out all required fields.");
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch("http://localhost:3000/api/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed. Please check your credentials.");
+      }
+
+      localStorage.setItem("urbanSpoonToken", data.token);
+      localStorage.setItem("urbanSpoonUser", JSON.stringify(data));
+
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#f9f7f4] text-[#10182f]">
       <section className="relative grid min-h-[calc(100vh-4.5rem)] place-items-center overflow-hidden px-4 py-8 max-[900px]:min-h-0 max-[900px]:py-6">
@@ -94,14 +144,28 @@ export default function LoginPage() {
             Log in to your Urban Spoon account to manage your reservations
           </p>
 
-          <form className="grid gap-4 text-left">
+          <form className="grid gap-4 text-left" onSubmit={handleSubmit}>
+            {error && (
+              <div className="rounded-[0.5rem] bg-[#ffe3ea] px-4 py-3 text-[0.95rem] font-semibold text-[#ef2c5b]">
+                {error}
+              </div>
+            )}
+            
             <label className="grid gap-2">
               <span className="text-[0.95rem] font-semibold text-[#12192f]">Email Address</span>
               <div className="flex min-h-[3.625rem] items-center gap-3 rounded-[0.875rem] border border-[#dbe2ee] bg-white px-4">
                 <div className="h-[1.375rem] w-[1.375rem] shrink-0 text-[#93a1ba]">
                   <MailIcon />
                 </div>
-                <input className="w-full border-0 bg-transparent text-[#1d2842] outline-none placeholder:text-[#7b889f]" type="email" placeholder="alex@example.com" />
+                <input
+                  className="w-full border-0 bg-transparent text-[#1d2842] outline-none placeholder:text-[#7b889f]"
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="alex@example.com"
+                  required
+                />
               </div>
             </label>
 
@@ -114,17 +178,35 @@ export default function LoginPage() {
                 <div className="h-[1.375rem] w-[1.375rem] shrink-0 text-[#93a1ba]">
                   <LockIcon />
                 </div>
-                <input className="w-full border-0 bg-transparent text-[#1d2842] outline-none placeholder:text-[#7b889f]" type="password" placeholder="........" />
+                <input
+                  className="w-full border-0 bg-transparent text-[#1d2842] outline-none placeholder:text-[#7b889f]"
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="........"
+                  required
+                />
               </div>
             </label>
 
             <label className="flex items-center gap-3 text-[#495774]">
-              <input className="m-0 h-5 w-5" type="checkbox" />
+              <input
+                className="m-0 mt-[0.15rem] h-[1.15rem] w-[1.15rem] shrink-0 cursor-pointer accent-[#ef2c5b]"
+                type="checkbox"
+                name="rememberMe"
+                checked={formData.rememberMe}
+                onChange={handleChange}
+              />
               <span>Remember me for 30 days</span>
             </label>
 
-            <button className="min-h-[3.75rem] rounded-[0.875rem] bg-[#ef2c5b] font-bold text-white shadow-[0_16px_26px_rgba(239,44,91,0.26)]" type="submit">
-              Login
+            <button
+              className="min-h-[3.75rem] rounded-[0.875rem] bg-[#ef2c5b] font-bold text-white shadow-[0_16px_26px_rgba(239,44,91,0.26)] disabled:opacity-70 disabled:cursor-not-allowed"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Login"}
             </button>
 
             <div className="flex items-center justify-center gap-3 text-[0.9rem] text-[#7a879e]">
