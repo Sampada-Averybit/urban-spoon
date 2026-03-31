@@ -17,7 +17,7 @@ const menuSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  image: {
+  imageUrl: {
     type: String,
   },
   available: {

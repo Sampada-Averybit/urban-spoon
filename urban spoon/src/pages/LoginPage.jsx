@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function BrandIcon() {
   return (
@@ -73,6 +74,8 @@ function SendIcon() {
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login, isLoggedIn } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -111,16 +114,20 @@ export default function LoginPage() {
         throw new Error(data.message || "Login failed. Please check your credentials.");
       }
 
-      localStorage.setItem("urbanSpoonToken", data.token);
-      localStorage.setItem("urbanSpoonUser", JSON.stringify(data));
-
-      navigate("/dashboard");
+      login(data.token, data);
+      
+      const destination = location.state?.from?.pathname || "/dashboard";
+      navigate(destination, { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
+
+  if (isLoggedIn) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <main className="min-h-screen bg-[#f9f7f4] text-[#10182f]">

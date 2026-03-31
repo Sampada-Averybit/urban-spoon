@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useCart } from "../context/CartContext";
 
 // =======================
 // SVG ICONS
@@ -55,44 +56,7 @@ function UserIcon() {
 // =======================
 // MOCK DATA
 // =======================
-const menuItems = [
-  {
-    id: 1,
-    name: "Artisan Salmon Bowl",
-    price: "$24.00",
-    rating: 4.9,
-    description: "Fresh Atlantic salmon, organic quinoa, and garden-picked...",
-    img: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-    category: "Lunch"
-  },
-  {
-    id: 2,
-    name: "Heritage Avocado Smash",
-    price: "$16.50",
-    rating: 4.7,
-    description: "Sourdough, poached eggs, heirloom tomatoes, and feta crumble.",
-    img: "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=600&q=80",
-    category: "Breakfast"
-  },
-  {
-    id: 3,
-    name: "Velvet Berry Stack",
-    price: "$18.00",
-    rating: 5.0,
-    description: "Buttermilk pancakes, maple-infused berries, and honeycomb butter.",
-    img: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=600&q=80",
-    category: "Breakfast"
-  },
-  {
-    id: 4,
-    name: "Spiced Urban Shakshuka",
-    price: "$19.50",
-    rating: 4.8,
-    description: "Middle Eastern spiced tomato sauce, cage-free eggs, and labneh.",
-    img: "https://images.unsplash.com/photo-1590593162201-f67611a18b87?auto=format&fit=crop&w=600&q=80",
-    category: "Breakfast"
-  }
-];
+// Menu items are now fetched from backend
 
 const recentOrders = [
   {
@@ -119,9 +83,59 @@ const recentOrders = [
 // COMPONENT
 // =======================
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState("Breakfast");
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  return (
+  const userStr = localStorage.getItem("urbanSpoonUser");
+  const user = userStr ? JSON.parse(userStr) : null;
+  const firstName = user?.name ? user.name.split(" ")[0] : "Guest";
+
+  useEffect(() => {
+    fetch("http://localhost:3000/api/menu")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          const formatted = data.map(item => ({
+            id: item._id || item.id,
+            name: item.name,
+            price: typeof item.price === "number" ? `$${item.price.toFixed(2)}` : item.price,
+            rating: item.rating || 4.8,
+            description: item.description,
+            img: item.imageUrl || "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?auto=format&fit=crop&w=900&q=80",
+            category: item.category || "Breakfast"
+          }));
+          setMenuItems(formatted);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch backend menu:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  // Trap the back button to keep user on the dashboard
+  useEffect(() => {
+    // Push an initial state into the history stack when the component mounts
+    window.history.pushState(null, null, window.location.pathname);
+    
+    // Listen for the popstate event (which fires when the user clicks back)
+    const handlePopState = (event) => {
+      // Push another state onto the stack, effectively canceling the back action
+      window.history.pushState(null, null, window.location.pathname);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+  
+    // Cleanup the event listener when the component unmounts
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
+  // Take the first 6 items to display as "Popular Dishes"
+  // In a real app, this might sort by rating or explicitly fetch a featured list
+  const featuredDishes = menuItems.slice(0, 6);  return (
     <div className="min-h-screen bg-[#faf9f8] text-[#12182f] font-sans">
 
 
@@ -140,17 +154,17 @@ export default function DashboardPage() {
           <div className="relative z-10 max-w-[500px]">
             <h1 className="text-[3rem] font-bold leading-[1.1] text-white max-[760px]:text-[2.25rem]">
               Good morning, <br />
-              <span className="text-[#cbfce1]">Julian!</span>
+              <span className="text-[#cbfce1]">{firstName}!</span>
             </h1>
             <p className="mt-4 text-[1.05rem] leading-[1.6] text-[#cbd5e1] max-w-[400px]">
               The city is waking up, and your table <em className="font-['Playfair_Display',serif] text-[#ef2c5b] not-italic">awaits.</em> Ready for a culinary adventure?
             </p>
             
             <div className="mt-8 flex items-center gap-4 max-[480px]:flex-col max-[480px]:items-stretch">
-              <button className="flex min-h-[3.25rem] items-center justify-center gap-2 rounded-full bg-[#ef2c5b] px-8 text-[0.95rem] font-bold text-white shadow-[0_8px_20px_rgba(239,44,91,0.3)] transition-transform hover:-translate-y-1">
+              <Link to="/menu" className="flex min-h-[3.25rem] items-center justify-center gap-2 rounded-full bg-[#ef2c5b] px-8 text-[0.95rem] font-bold text-white shadow-[0_8px_20px_rgba(239,44,91,0.3)] transition-transform hover:-translate-y-1 no-underline">
                 Order Now 
                 <span className="text-[1.2rem] leading-none">›</span>
-              </button>
+              </Link>
               <button className="flex min-h-[3.25rem] items-center justify-center rounded-full border-2 border-[rgba(255,255,255,0.2)] bg-black/20 px-8 text-[0.95rem] font-bold text-white backdrop-blur-sm transition-colors hover:bg-white/10">
                 Book a Table
               </button>
@@ -210,58 +224,49 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* MENU PREVIEW */}
+        {/* POPULAR DISHES PREVIEW */}
         <section>
           <div className="mb-6 flex items-end justify-between max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-4">
             <h2 className="text-[1.5rem] font-bold text-[#12182f]">
-              Our <span className="font-['Playfair_Display',serif] text-[1.8rem] font-normal italic text-[#ef2c5b]">Menu</span>
+              Popular <span className="font-['Playfair_Display',serif] text-[1.8rem] font-normal italic text-[#ef2c5b]">Dishes</span>
             </h2>
-            
-            <div className="flex gap-2 rounded-full bg-white p-1 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
-              {["Breakfast", "Lunch", "Dinner"].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`rounded-full px-5 py-2 text-[0.9rem] font-bold transition-colors ${
-                    activeTab === tab 
-                      ? "bg-[#fff1f4] text-[#ef2c5b]" 
-                      : "text-[#64748b] hover:text-[#12182f]"
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-6 max-[1100px]:grid-cols-2 max-[640px]:grid-cols-1">
-            {menuItems.map((item) => (
-              <div key={item.id} className="flex flex-col overflow-hidden rounded-[1.25rem] bg-white p-3 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-transform hover:-translate-y-1">
+          <div className="grid grid-cols-3 gap-6 max-[900px]:grid-cols-2 max-[640px]:grid-cols-1">
+            {loading ? (
+              <p className="col-span-full py-8 text-center text-[#64748b]">Loading popular dishes...</p>
+            ) : featuredDishes.length === 0 ? (
+              <p className="col-span-full py-8 text-center text-[#64748b]">No featured dishes available.</p>
+            ) : featuredDishes.map((item) => (
+              <div key={item.id} className="group flex flex-col overflow-hidden rounded-[1.25rem] bg-white p-3 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
                 <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[#f1f5f9]">
-                  <img src={item.img} alt={item.name} className="h-full w-full object-cover" loading="lazy" />
-                  <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[0.8rem] font-bold backdrop-blur-sm">
+                  <img src={item.img} alt={item.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" onError={(e) => { e.target.onerror = null; e.target.src="https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?auto=format&fit=crop&w=900&q=80" }} />
+                  <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[0.8rem] font-bold shadow-sm backdrop-blur-sm">
                     <span className="h-3 w-3"><StarIcon /></span>
                     {item.rating}
                   </div>
                 </div>
                 
-                <div className="flex flex-1 flex-col p-3 pt-4">
+                <div className="flex flex-1 flex-col p-2 pt-4">
                   <div className="mb-2 flex items-start justify-between gap-3">
-                    <h3 className="flex-1 text-[1rem] font-bold leading-tight text-[#1a202c]">{item.name}</h3>
-                    <span className="font-bold text-[#ef2c5b]">{item.price}</span>
+                    <h3 className="flex-1 text-[1.05rem] font-bold leading-tight text-[#1a202c]">{item.name}</h3>
+                    <span className="text-[1.05rem] font-bold text-[#ef2c5b]">{item.price}</span>
                   </div>
-                  <p className="mb-4 text-[0.85rem] leading-[1.6] text-[#64748b] line-clamp-2">
+                  <p className="text-[0.85rem] leading-[1.6] text-[#64748b] line-clamp-2">
                     {item.description}
                   </p>
-                  <div className="mt-auto">
-                    <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#fff1f4] py-[0.6rem] text-[0.9rem] font-bold text-[#ef2c5b] transition-colors hover:bg-[#ffe3ea]">
-                      <span className="h-[1.1rem] w-[1.1rem]"><AddToCartIcon /></span>
-                      Add to Cart
-                    </button>
-                  </div>
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="mt-8 flex justify-center">
+            <Link 
+              to="/menu" 
+              className="inline-flex min-h-[3rem] items-center justify-center rounded-full border-[1.5px] border-[#dbe2ee] bg-white px-8 text-[0.95rem] font-bold text-[#172033] shadow-sm transition-colors hover:border-[#cbd5e1] hover:bg-[#f8fafc] no-underline"
+            >
+              View Full Menu
+            </Link>
           </div>
         </section>
 

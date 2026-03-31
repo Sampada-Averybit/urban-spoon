@@ -4,9 +4,9 @@ const jwt = require('jsonwebtoken');
 
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, phone, password } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !phone || !password) {
       return res.status(400).json({ message: 'Please provide all required fields' });
     }
 
@@ -20,6 +20,7 @@ const registerUser = async (req, res) => {
     const user = await User.create({
       name,
       email,
+      phone,
       password: hashedPassword,
     });
 
@@ -31,6 +32,7 @@ const registerUser = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
       role: user.role,
       token,
     });
@@ -65,6 +67,7 @@ const loginUser = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
       role: user.role,
       token,
     });
@@ -73,7 +76,28 @@ const loginUser = async (req, res) => {
   }
 };
 
+const getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
+  getUserProfile,
 };

@@ -1,4 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext";
 
 const tabs = ["Breakfast", "Lunch", "Dinner", "Drinks", "Dessert"];
 const tabSectionMap = {
@@ -9,6 +11,14 @@ const tabSectionMap = {
   Dessert: ["dessert"],
 };
 
+
+function BackArrowIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M19 12H5M5 12L12 19M5 12L12 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 function SearchIcon() {
   return (
@@ -111,11 +121,11 @@ function badgeClass(theme) {
 }
 
 export default function Menu() {
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
   const [activeTab, setActiveTab] = useState("Breakfast");
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [cartOpen, setCartOpen] = useState(false);
-  const [cartItems, setCartItems] = useState([]);
   const [sections, setSections] = useState([]);
 
   useEffect(() => {
@@ -130,7 +140,7 @@ export default function Menu() {
               name: item.name,
               price: typeof item.price === "number" ? `$${item.price}` : item.price,
               description: item.description,
-              image: item.image || "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?auto=format&fit=crop&w=900&q=80",
+              image: item.imageUrl || "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?auto=format&fit=crop&w=900&q=80",
               badge: "New",
               badgeTheme: "green"
             });
@@ -169,38 +179,9 @@ export default function Menu() {
       .filter((section) => section.items.length > 0);
   }, [activeTab, searchQuery, sections]);
 
-  const cartTotal = cartItems.reduce((total, item) => total + item.priceValue * item.quantity, 0);
-
-  function handleAddToCart(item) {
+  function handleAddToCartLocal(item) {
     const priceValue = Number(item.price.replace("$", ""));
-
-    setCartItems((current) => {
-      const existingItem = current.find((entry) => entry.name === item.name);
-
-      if (existingItem) {
-        return current.map((entry) =>
-          entry.name === item.name
-            ? { ...entry, quantity: entry.quantity + 1 }
-            : entry,
-        );
-      }
-
-      return [...current, { ...item, priceValue, quantity: 1 }];
-    });
-
-    setCartOpen(true);
-  }
-
-  function handleCartQuantity(name, change) {
-    setCartItems((current) =>
-      current
-        .map((item) =>
-          item.name === name
-            ? { ...item, quantity: Math.max(0, item.quantity + change) }
-            : item,
-        )
-        .filter((item) => item.quantity > 0),
-    );
+    addToCart({ ...item, price: priceValue });
   }
 
   return (
@@ -220,10 +201,19 @@ export default function Menu() {
           </button>
         </div>
 
-        <section className="mb-8 flex items-end justify-between gap-6 max-[1024px]:flex-col max-[1024px]:items-start">
-          <div>
-            <h1 className="text-[clamp(3rem,5vw,4.2rem)] leading-[0.95] text-[#121a38] max-[640px]:text-[2.7rem]">Our Menu</h1>
-            <p className="mt-2 max-w-[36rem] text-[1.05rem] text-[#6a7998]">Handcrafted flavors using locally sourced organic ingredients.</p>
+        <section className="mb-8 flex flex-col items-start gap-6">
+          <button 
+            onClick={() => navigate(-1)}
+            className="flex h-10 items-center justify-center gap-2 rounded-full border border-[#f0e8e9] bg-white px-4 text-[0.95rem] font-bold text-[#1a243d] transition-colors hover:bg-[#f8f9fa]"
+          >
+            <span className="h-4 w-4"><BackArrowIcon /></span>
+            Back
+          </button>
+          <div className="flex w-full items-end justify-between gap-6 max-[1024px]:flex-col max-[1024px]:items-start">
+            <div>
+              <h1 className="text-[clamp(3rem,5vw,4.2rem)] leading-[0.95] text-[#121a38] max-[640px]:text-[2.7rem]">Our Menu</h1>
+              <p className="mt-2 max-w-[36rem] text-[1.05rem] text-[#6a7998]">Handcrafted flavors using locally sourced organic ingredients.</p>
+            </div>
           </div>
         </section>
 
@@ -272,7 +262,9 @@ export default function Menu() {
                 {section.items.map((item) => (
                   <article className="flex gap-4 rounded-[0.875rem] border border-[#f0e8e9] bg-white p-4 shadow-[0_2px_8px_rgba(17,27,51,0.04)] max-[640px]:flex-col" key={item.name}>
                     <div className="h-28 w-28 shrink-0 overflow-hidden rounded-[0.75rem] bg-[#edf0f4] max-[640px]:h-[220px] max-[640px]:w-full">
-                      <img className="block h-full w-full object-cover" src={item.image} alt={item.name} />
+                      <a href={item.image} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
+                        <img className="block h-full w-full object-cover transition-transform duration-300 hover:scale-110" src={item.image} alt={item.name} onError={(e) => { e.target.onerror = null; e.target.src="https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?auto=format&fit=crop&w=900&q=80" }} />
+                      </a>
                     </div>
                     <div className="grid min-w-0 flex-1 gap-3">
                       <div className="flex items-start justify-between gap-3 max-[640px]:flex-col max-[640px]:items-start">
@@ -287,7 +279,7 @@ export default function Menu() {
                         <button
                           className="min-h-10 whitespace-nowrap rounded-full bg-[#ffe3ea] px-[0.95rem] font-bold text-[#ff2457] hover:bg-[#ffd3df] max-[640px]:w-full"
                           type="button"
-                          onClick={() => handleAddToCart(item)}
+                          onClick={() => handleAddToCartLocal(item)}
                         >
                           Add to cart
                         </button>
@@ -306,47 +298,6 @@ export default function Menu() {
             </div>
           )}
         </div>
-
-        {cartOpen && (
-          <aside className="sticky bottom-4 ml-auto mt-6 w-[min(360px,100%)] rounded-[1rem] border border-[#f0e8e9] bg-white p-6 shadow-[0_18px_40px_rgba(17,27,51,0.08)] max-[640px]:w-full" aria-label="Shopping cart">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className="text-[1.2rem] text-[#121a38]">Your Cart</h2>
-              <button className="bg-transparent font-bold text-[#ff2457]" type="button" onClick={() => setCartOpen(false)}>
-                Close
-              </button>
-            </div>
-
-            {cartItems.length === 0 ? (
-              <p className="leading-[1.55] text-[#6a7998]">Your cart is empty. Add a dish to get started.</p>
-            ) : (
-              <>
-                <div className="grid gap-3">
-                  {cartItems.map((item, index) => (
-                    <div className={`flex items-center justify-between gap-3 ${index === 0 ? "pt-0" : "border-t border-[#f4eaed] pt-3"}`} key={item.name}>
-                      <div>
-                        <strong className="block">{item.name}</strong>
-                        <span className="mt-1 block text-[#6a7998]">{item.price}</span>
-                      </div>
-                      <div className="inline-flex items-center gap-2">
-                        <button className="h-7 w-7 rounded-full bg-[#ffe3ea] font-bold text-[#ff2457]" type="button" onClick={() => handleCartQuantity(item.name, -1)}>
-                          -
-                        </button>
-                        <span>{item.quantity}</span>
-                        <button className="h-7 w-7 rounded-full bg-[#ffe3ea] font-bold text-[#ff2457]" type="button" onClick={() => handleCartQuantity(item.name, 1)}>
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#f4eaed] pt-4 text-[#121a38]">
-                  <span>Total</span>
-                  <strong>${cartTotal.toFixed(2)}</strong>
-                </div>
-              </>
-            )}
-          </aside>
-        )}
 
         <div className="my-20 mb-4 h-px bg-[#f1d9df]" />
 

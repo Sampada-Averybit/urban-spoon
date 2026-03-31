@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const perks = [
   {
@@ -78,6 +79,14 @@ function MailIcon() {
   );
 }
 
+function PhoneIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function LockIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -124,9 +133,11 @@ function SectionIcon({ type }) {
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { isLoggedIn } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     password: "",
     confirmPassword: "",
     agreeToTerms: false,
@@ -143,7 +154,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    if (!formData.name || !formData.email || !formData.password) {
+    if (!formData.name || !formData.email || !formData.phone || !formData.password) {
       return setError("Please fill out all required fields.");
     }
     if (formData.password !== formData.confirmPassword) {
@@ -161,6 +172,7 @@ export default function RegisterPage() {
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
+          phone: formData.phone,
           password: formData.password,
         }),
       });
@@ -178,6 +190,10 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
+
+  if (isLoggedIn) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <main
@@ -259,6 +275,24 @@ export default function RegisterPage() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="john@example.com"
+                    required
+                  />
+                </div>
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-[0.95rem] font-semibold text-[#111a31]">Phone Number</span>
+                <div className="flex min-h-[3.625rem] items-center gap-3 rounded-[0.875rem] border border-[#dce3f0] bg-white px-4">
+                  <div className="h-[1.375rem] w-[1.375rem] shrink-0 text-[#97a5bc]">
+                    <PhoneIcon />
+                  </div>
+                  <input
+                    className="w-full border-0 bg-transparent text-[0.98rem] text-[#22304f] outline-none placeholder:text-[#7f8ba4]"
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="+1 (555) 000-0000"
                     required
                   />
                 </div>
