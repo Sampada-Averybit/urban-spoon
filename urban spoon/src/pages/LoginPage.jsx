@@ -108,7 +108,16 @@ export default function LoginPage() {
         }),
       });
 
-      const data = await response.json();
+      const raw = await response.text();
+      let data = {};
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        if (raw.trim().startsWith("<!DOCTYPE")) {
+          throw new Error("Received HTML instead of JSON. Please verify the backend API URL/server.");
+        }
+        throw new Error("Invalid server response format.");
+      }
 
       if (!response.ok) {
         throw new Error(data.message || "Login failed. Please check your credentials.");

@@ -1,14 +1,48 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  const { token: authToken, isLoggedIn, login } = useAuth();
   const [profile, setProfile] = useState(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isPasswordMode, setIsPasswordMode] = useState(false);
+  const [isPasswordSaving, setIsPasswordSaving] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [updateError, setUpdateError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccessMessage, setPasswordSuccessMessage] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem("urbanSpoonToken");
+    const storedUserStr = localStorage.getItem("urbanSpoonUser");
+    if (storedUserStr) {
+      try {
+        const storedUser = JSON.parse(storedUserStr);
+        setProfile(storedUser);
+        setFormData({
+          name: storedUser?.name || "",
+          email: storedUser?.email || "",
+          phone: storedUser?.phone || "",
+        });
+      } catch (parseError) {
+        console.error("Failed to parse local user data:", parseError);
+      }
+    }
+
+    const token = authToken || localStorage.getItem("urbanSpoonToken");
     if (!token) {
       navigate("/login");
       return;
@@ -19,24 +53,200 @@ export default function ProfilePage() {
         Authorization: `Bearer ${token}`,
       },
     })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch profile");
-        return res.json();
+      .then(async (res) => {
+        const raw = await res.text();
+        let data = {};
+        try {
+          data = raw ? JSON.parse(raw) : {};
+        } catch {
+          if (raw.trim().startsWith("<!DOCTYPE")) {
+            throw new Error("Received HTML instead of JSON. Please verify the backend API URL/server.");
+          }
+          throw new Error("Invalid server response format.");
+        }
+
+        if (!res.ok) throw new Error(data.message || "Failed to fetch profile");
+        return data;
       })
       .then((data) => {
         setProfile(data);
+        setFormData({
+          name: data?.name || "",
+          email: data?.email || "",
+          phone: data?.phone || "",
+        });
         setLoading(false);
       })
       .catch((err) => {
         setError(err.message);
         setLoading(false);
       });
-  }, [navigate]);
+  }, [authToken, navigate]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditClick = () => {
+    setSuccessMessage("");
+    setUpdateError("");
+    setFormData({
+      name: profile?.name || "",
+      email: profile?.email || "",
+      phone: profile?.phone || "",
+    });
+    setIsEditMode(true);
+  };
+
+  const handleCancel = () => {
+    setFormData({
+      name: profile?.name || "",
+      email: profile?.email || "",
+      phone: profile?.phone || "",
+    });
+    setIsEditMode(false);
+    setSuccessMessage("");
+    setUpdateError("");
+  };
+
+  const handleSaveChanges = async () => {
+    setSuccessMessage("");
+    setUpdateError("");
+    setIsSaving(true);
+
+    try {
+      const token = authToken || localStorage.getItem("urbanSpoonToken");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch("http://localhost:3000/api/users/update-profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+        }),
+      });
+
+      const raw = await response.text();
+      let data = {};
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        if (raw.trim().startsWith("<!DOCTYPE")) {
+          throw new Error("Received HTML instead of JSON. Please verify the backend API URL/server.");
+        }
+        throw new Error("Invalid server response format.");
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update profile");
+      }
+
+      setProfile(data);
+      setFormData({
+        name: data?.name || "",
+        email: data?.email || "",
+        phone: data?.phone || "",
+      });
+      setIsEditMode(false);
+      setSuccessMessage("Profile updated successfully.");
+
+      const existingUserStr = localStorage.getItem("urbanSpoonUser");
+      const existingUser = existingUserStr ? JSON.parse(existingUserStr) : {};
+      const updatedUser = { ...existingUser, ...data, token };
+      login(token, updatedUser);
+    } catch (err) {
+      setUpdateError(err.message || "Something went wrong while updating profile.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("urbanSpoonToken");
     localStorage.removeItem("urbanSpoonUser");
     navigate("/");
+  };
+
+  const handlePasswordToggle = () => {
+    setIsPasswordMode((prev) => !prev);
+    setPasswordForm({ currentPassword: "", newPassword: "" });
+    setPasswordError("");
+    setPasswordSuccessMessage("");
+  };
+
+  const handlePasswordCancel = () => {
+    setIsPasswordMode(false);
+    setPasswordForm({ currentPassword: "", newPassword: "" });
+    setPasswordError("");
+    setPasswordSuccessMessage("");
+  };
+
+  const handlePasswordInputChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePasswordSave = async () => {
+    setPasswordError("");
+    setPasswordSuccessMessage("");
+
+    if (!passwordForm.currentPassword || !passwordForm.newPassword) {
+      setPasswordError("Please enter current and new password.");
+      return;
+    }
+
+    const token = authToken || localStorage.getItem("urbanSpoonToken");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    setIsPasswordSaving(true);
+    try {
+      const response = await fetch("http://localhost:3000/api/user/change-password", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      });
+
+      const raw = await response.text();
+      let data = {};
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        if (raw.trim().startsWith("<!DOCTYPE")) {
+          throw new Error("Received HTML instead of JSON. Please verify the backend API URL/server.");
+        }
+        throw new Error("Invalid server response format.");
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update password");
+      }
+
+      setPasswordSuccessMessage(data.message || "Password updated successfully.");
+      setPasswordForm({ currentPassword: "", newPassword: "" });
+      setIsPasswordMode(false);
+    } catch (err) {
+      setPasswordError(err.message || "Unable to change password.");
+    } finally {
+      setIsPasswordSaving(false);
+    }
   };
 
   return (
@@ -50,7 +260,7 @@ export default function ProfilePage() {
       {/* Header Area representing the back bar */}
       <div className="mx-auto flex max-w-[1240px] items-center justify-between px-6 py-5 max-[760px]:px-4">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate(isLoggedIn ? "/dashboard" : "/login", { replace: true })}
           className="flex items-center gap-3 text-lg font-semibold text-[#12182f] transition-colors hover:text-[#ef2c5b]"
         >
           <svg
@@ -109,18 +319,88 @@ export default function ProfilePage() {
               </div>
 
               <h2 className="mb-1 text-2xl font-bold text-[#12182f]">
-                {profile?.name}
+                {isEditMode ? (
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    disabled={isSaving}
+                    className="w-full rounded-[0.75rem] border border-[#dbe2ee] px-3 py-2 text-center text-[1.25rem] font-bold text-[#12182f] outline-none focus:border-[#ef2c5b]"
+                    required
+                  />
+                ) : (
+                  profile?.name
+                )}
               </h2>
               <p className="mb-0.5 text-[0.85rem] tracking-wide text-[#6b7280]">
-                {profile?.phone}
+                {isEditMode ? (
+                  <input
+                    type="text"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    disabled={isSaving}
+                    className="w-full rounded-[0.75rem] border border-[#dbe2ee] px-3 py-2 text-center text-[0.9rem] text-[#6b7280] outline-none focus:border-[#ef2c5b]"
+                    required
+                  />
+                ) : (
+                  profile?.phone
+                )}
               </p>
               <p className="mb-5 text-[0.85rem] text-[#6b7280]">
-                {profile?.email}
+                {isEditMode ? (
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled={isSaving}
+                    className="w-full rounded-[0.75rem] border border-[#dbe2ee] px-3 py-2 text-center text-[0.9rem] text-[#6b7280] outline-none focus:border-[#ef2c5b]"
+                    required
+                  />
+                ) : (
+                  profile?.email
+                )}
               </p>
 
-              <button className="rounded-full bg-[#ef2c5b] px-8 py-3 text-[0.85rem] font-bold uppercase tracking-wide text-white shadow-[0_6px_20px_rgba(239,44,91,0.25)] transition-transform hover:-translate-y-0.5 hover:bg-[#d91e4a]">
-                Edit Profile
-              </button>
+              {isEditMode ? (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleSaveChanges}
+                    disabled={isSaving}
+                    className="rounded-full bg-[#ef2c5b] px-6 py-3 text-[0.8rem] font-bold uppercase tracking-wide text-white shadow-[0_6px_20px_rgba(239,44,91,0.25)] transition-transform hover:-translate-y-0.5 hover:bg-[#d91e4a] disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isSaving ? "Saving..." : "Save Changes"}
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    disabled={isSaving}
+                    className="rounded-full border border-[#dbe2ee] bg-white px-6 py-3 text-[0.8rem] font-bold uppercase tracking-wide text-[#475569] transition-colors hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleEditClick}
+                  className="rounded-full bg-[#ef2c5b] px-8 py-3 text-[0.85rem] font-bold uppercase tracking-wide text-white shadow-[0_6px_20px_rgba(239,44,91,0.25)] transition-transform hover:-translate-y-0.5 hover:bg-[#d91e4a]"
+                >
+                  Edit Profile
+                </button>
+              )}
+
+              {successMessage && (
+                <div className="mt-4 w-full rounded-[0.5rem] bg-[#dcfce7] px-4 py-3 text-center text-[0.9rem] font-semibold text-[#166534]">
+                  {successMessage}
+                </div>
+              )}
+
+              {!loading && updateError && (
+                <div className="mt-4 w-full rounded-[0.5rem] bg-[#ffe3ea] px-4 py-3 text-center text-[0.9rem] font-semibold text-[#ef2c5b]">
+                  {updateError}
+                </div>
+              )}
             </div>
 
             {/* My Orders Card */}
@@ -187,43 +467,91 @@ export default function ProfilePage() {
             </div>
 
             {/* Change Password */}
-            <div className="group flex cursor-pointer items-center gap-4 rounded-[1rem] bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-colors hover:bg-gray-50">
-              <div className="p-1">
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#ef2c5b"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M21 2v6h-6"></path>
-                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                  <path d="M12 10v4"></path>
-                  <path d="M10 12h4"></path>
-                </svg>
+            <div className="rounded-[1rem] bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+              <div className="flex items-center gap-4">
+                <div className="p-1">
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#ef2c5b"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 2v6h-6"></path>
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M12 10v4"></path>
+                    <path d="M10 12h4"></path>
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-[0.95rem] font-bold text-[#12182f]">
+                    Change Password
+                  </h3>
+                </div>
+                {!isPasswordMode && (
+                  <button
+                    onClick={handlePasswordToggle}
+                    disabled={isPasswordSaving}
+                    className="rounded-full bg-[#ef2c5b] px-4 py-2 text-[0.75rem] font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#d91e4a] disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    Edit
+                  </button>
+                )}
               </div>
-              <div className="flex-1">
-                <h3 className="text-[0.95rem] font-bold text-[#12182f]">
-                  Change Password
-                </h3>
-              </div>
-              <div className="text-gray-300 transition-transform group-hover:translate-x-1 group-hover:text-gray-400">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
+
+              {isPasswordMode && (
+                <div className="mt-4 grid gap-3">
+                  <input
+                    type="password"
+                    name="currentPassword"
+                    value={passwordForm.currentPassword}
+                    onChange={handlePasswordInputChange}
+                    placeholder="Current Password"
+                    disabled={isPasswordSaving}
+                    className="w-full rounded-[0.75rem] border border-[#dbe2ee] px-3 py-2 text-[0.9rem] text-[#1f2937] outline-none focus:border-[#ef2c5b]"
+                  />
+                  <input
+                    type="password"
+                    name="newPassword"
+                    value={passwordForm.newPassword}
+                    onChange={handlePasswordInputChange}
+                    placeholder="New Password"
+                    disabled={isPasswordSaving}
+                    className="w-full rounded-[0.75rem] border border-[#dbe2ee] px-3 py-2 text-[0.9rem] text-[#1f2937] outline-none focus:border-[#ef2c5b]"
+                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handlePasswordSave}
+                      disabled={isPasswordSaving}
+                      className="rounded-full bg-[#ef2c5b] px-5 py-2 text-[0.75rem] font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#d91e4a] disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      {isPasswordSaving ? "Saving..." : "Save"}
+                    </button>
+                    <button
+                      onClick={handlePasswordCancel}
+                      disabled={isPasswordSaving}
+                      className="rounded-full border border-[#dbe2ee] bg-white px-5 py-2 text-[0.75rem] font-bold uppercase tracking-wide text-[#475569] transition-colors hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {passwordSuccessMessage && (
+                <div className="mt-3 rounded-[0.5rem] bg-[#dcfce7] px-4 py-3 text-[0.9rem] font-semibold text-[#166534]">
+                  {passwordSuccessMessage}
+                </div>
+              )}
+
+              {passwordError && (
+                <div className="mt-3 rounded-[0.5rem] bg-[#ffe3ea] px-4 py-3 text-[0.9rem] font-semibold text-[#ef2c5b]">
+                  {passwordError}
+                </div>
+              )}
             </div>
 
             {/* Logout */}

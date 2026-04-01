@@ -2,11 +2,10 @@ import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 
-const tabs = ["Breakfast", "Lunch", "Dinner", "Drinks", "Dessert"];
+const tabs = ["Starters", "Main Course", "Drinks", "Dessert"];
 const tabSectionMap = {
-  Breakfast: ["morning"],
-  Lunch: ["midday"],
-  Dinner: ["evening"],
+  Starters: ["starters"],
+  "Main Course": ["main-course"],
   Drinks: ["drinks"],
   Dessert: ["dessert"],
 };
@@ -123,7 +122,7 @@ function badgeClass(theme) {
 export default function Menu() {
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const [activeTab, setActiveTab] = useState("Breakfast");
+  const [activeTab, setActiveTab] = useState("Starters");
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sections, setSections] = useState([]);
@@ -134,7 +133,13 @@ export default function Menu() {
       .then((data) => {
         if (Array.isArray(data)) {
           const groupedData = data.reduce((acc, item) => {
-            const cat = item.category || "Breakfast";
+            const rawCategory = String(item.category || "").trim().toLowerCase();
+            let cat = "Starters";
+            if (rawCategory === "starters" || rawCategory === "starter") cat = "Starters";
+            else if (rawCategory === "main course" || rawCategory === "maincourse" || rawCategory === "main-course") cat = "Main Course";
+            else if (rawCategory === "drinks" || rawCategory === "drink") cat = "Drinks";
+            else if (rawCategory === "dessert" || rawCategory === "desserts") cat = "Dessert";
+
             if (!acc[cat]) acc[cat] = [];
             acc[cat].push({
               name: item.name,
@@ -148,9 +153,8 @@ export default function Menu() {
           }, {});
 
           const newSections = [
-            { id: "morning", title: "Morning Favorites", icon: "sun", items: groupedData["Breakfast"] || [] },
-            { id: "midday", title: "Midday Bites", icon: "burger", items: groupedData["Lunch"] || [] },
-            { id: "evening", title: "Evening Specialties", icon: "moon", items: groupedData["Dinner"] || [] },
+            { id: "starters", title: "Starters", icon: "sun", items: groupedData["Starters"] || [] },
+            { id: "main-course", title: "Main Course", icon: "burger", items: groupedData["Main Course"] || [] },
             { id: "drinks", title: "Signature Drinks", icon: "sun", items: groupedData["Drinks"] || [] },
             { id: "dessert", title: "Dessert Favorites", icon: "moon", items: groupedData["Dessert"] || [] },
           ].filter((s) => s.items.length > 0);

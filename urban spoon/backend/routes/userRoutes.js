@@ -12,4 +12,10 @@ router.post('/login', userController.loginUser);
 // GET /api/users/profile
 router.get('/profile', protect, userController.getUserProfile);
 
+// PUT /api/user/update-profile
+router.put('/update-profile', protect, userController.updateUserProfile);
+
+// PUT /api/user/change-password
+router.put('/change-password', protect, userController.changeUserPassword);
+
 module.exports = router;

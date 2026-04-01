@@ -4,6 +4,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const menuRoutes = require('./routes/menuRoutes');
 const userRoutes = require('./routes/userRoutes');
+const reservationRoutes = require('./routes/reservationRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,6 +21,8 @@ mongoose.connect(process.env.MONGO_URI)
 // API Routes
 app.use('/api/menu', menuRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/reservations', reservationRoutes);
 
 // Test Route
 app.get('/', (req, res) => {

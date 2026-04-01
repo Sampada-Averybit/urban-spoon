@@ -10,7 +10,11 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import ProfilePage from "./pages/ProfilePage";
 import CartPage from "./pages/CartPage";
+import ReservationPage from "./pages/ReservationPage";
+import MenuCardPage from "./pages/MenuCardPage";
+import MyReservationsPage from "./pages/MyReservationsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import FloatingCart from "./components/FloatingCart";
 
 export default function App() {
   const location = useLocation();
@@ -19,14 +23,26 @@ export default function App() {
     location.pathname === "/register" ||
     location.pathname === "/login" ||
     location.pathname === "/dashboard" ||
-    location.pathname === "/profile";
+    location.pathname === "/profile" ||
+    location.pathname === "/reservations" ||
+    location.pathname === "/menu-card" ||
+    location.pathname === "/my-reservations";
+
+  const hideSharedNavbar = location.pathname === "/reservations" || location.pathname === "/menu-card" || location.pathname === "/my-reservations";
 
   return (
     <div className="min-h-screen">
-      <Navbar />
+      {!hideSharedNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/menu" element={<MenuPage />} />
+        <Route path="/menu-card" element={<MenuCardPage />} />
+        <Route path="/reservations" element={<ReservationPage />} />
+        <Route path="/my-reservations" element={
+          <ProtectedRoute>
+            <MyReservationsPage />
+          </ProtectedRoute>
+        } />
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <DashboardPage />
@@ -41,6 +57,7 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
       </Routes>
+      <FloatingCart />
       {!hideSharedFooter && <Footer />}
     </div>
   );

@@ -99,7 +99,6 @@ export default function DashboardPage() {
             id: item._id || item.id,
             name: item.name,
             price: typeof item.price === "number" ? `$${item.price.toFixed(2)}` : item.price,
-            rating: item.rating || 4.8,
             description: item.description,
             img: item.imageUrl || "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?auto=format&fit=crop&w=900&q=80",
             category: item.category || "Breakfast"
@@ -165,9 +164,9 @@ export default function DashboardPage() {
                 Order Now 
                 <span className="text-[1.2rem] leading-none">›</span>
               </Link>
-              <button className="flex min-h-[3.25rem] items-center justify-center rounded-full border-2 border-[rgba(255,255,255,0.2)] bg-black/20 px-8 text-[0.95rem] font-bold text-white backdrop-blur-sm transition-colors hover:bg-white/10">
+              <Link to="/reservations" className="flex min-h-[3.25rem] items-center justify-center rounded-full border-2 border-[rgba(255,255,255,0.2)] bg-black/20 px-8 text-[0.95rem] font-bold text-white backdrop-blur-sm transition-colors hover:bg-white/10 no-underline">
                 Book a Table
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -232,27 +231,23 @@ export default function DashboardPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-3 gap-6 max-[900px]:grid-cols-2 max-[640px]:grid-cols-1">
+          <div className="grid grid-cols-3 gap-5 max-[900px]:grid-cols-2 max-[640px]:grid-cols-1">
             {loading ? (
               <p className="col-span-full py-8 text-center text-[#64748b]">Loading popular dishes...</p>
             ) : featuredDishes.length === 0 ? (
               <p className="col-span-full py-8 text-center text-[#64748b]">No featured dishes available.</p>
             ) : featuredDishes.map((item) => (
-              <div key={item.id} className="group flex flex-col overflow-hidden rounded-[1.25rem] bg-white p-3 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
-                <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[#f1f5f9]">
+              <div key={item.id} className="group flex flex-col overflow-hidden rounded-[1rem] bg-white p-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
+                <div className="relative aspect-[16/11] overflow-hidden rounded-[0.8rem] bg-[#f1f5f9]">
                   <img src={item.img} alt={item.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" onError={(e) => { e.target.onerror = null; e.target.src="https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?auto=format&fit=crop&w=900&q=80" }} />
-                  <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[0.8rem] font-bold shadow-sm backdrop-blur-sm">
-                    <span className="h-3 w-3"><StarIcon /></span>
-                    {item.rating}
-                  </div>
                 </div>
                 
-                <div className="flex flex-1 flex-col p-2 pt-4">
+                <div className="flex flex-1 flex-col p-2 pt-3">
                   <div className="mb-2 flex items-start justify-between gap-3">
-                    <h3 className="flex-1 text-[1.05rem] font-bold leading-tight text-[#1a202c]">{item.name}</h3>
-                    <span className="text-[1.05rem] font-bold text-[#ef2c5b]">{item.price}</span>
+                    <h3 className="flex-1 text-[0.98rem] font-bold leading-tight text-[#1a202c]">{item.name}</h3>
+                    <span className="text-[0.98rem] font-bold text-[#ef2c5b]">{item.price}</span>
                   </div>
-                  <p className="text-[0.85rem] leading-[1.6] text-[#64748b] line-clamp-2">
+                  <p className="text-[0.82rem] leading-[1.55] text-[#64748b] line-clamp-2">
                     {item.description}
                   </p>
                 </div>
