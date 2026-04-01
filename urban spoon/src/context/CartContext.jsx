@@ -17,7 +17,7 @@ export function CartProvider({ children }) {
   const addToCart = (newItem) => {
     setCartItems((prev) => {
       // Ensure each item has an identifiable ID, defaulting to name since menu utilizes name widely
-      const uniqueId = newItem.id || newItem.name; 
+      const uniqueId = newItem.id || newItem._id || newItem.name; 
       const existingItem = prev.find((item) => item.id === uniqueId);
 
       if (existingItem) {
@@ -28,7 +28,7 @@ export function CartProvider({ children }) {
         );
       }
       
-      return [...prev, { ...newItem, id: uniqueId, quantity: 1 }];
+      return [...prev, { ...newItem, id: uniqueId, _id: newItem._id || uniqueId, quantity: 1 }];
     });
   };
 

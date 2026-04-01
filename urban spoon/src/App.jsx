@@ -13,6 +13,8 @@ import CartPage from "./pages/CartPage";
 import ReservationPage from "./pages/ReservationPage";
 import MenuCardPage from "./pages/MenuCardPage";
 import MyReservationsPage from "./pages/MyReservationsPage";
+import MyOrdersPage from "./pages/MyOrdersPage";
+import CreateCouponPage from "./pages/CreateCouponPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import FloatingCart from "./components/FloatingCart";
 
@@ -26,13 +28,13 @@ export default function App() {
     location.pathname === "/profile" ||
     location.pathname === "/reservations" ||
     location.pathname === "/menu-card" ||
-    location.pathname === "/my-reservations";
-
-  const hideSharedNavbar = location.pathname === "/reservations" || location.pathname === "/menu-card" || location.pathname === "/my-reservations";
+    location.pathname === "/my-reservations" ||
+    location.pathname === "/my-orders" ||
+    location.pathname === "/create-coupon";
 
   return (
     <div className="min-h-screen">
-      {!hideSharedNavbar && <Navbar />}
+      <Navbar />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/menu" element={<MenuPage />} />
@@ -41,6 +43,16 @@ export default function App() {
         <Route path="/my-reservations" element={
           <ProtectedRoute>
             <MyReservationsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/my-orders" element={
+          <ProtectedRoute>
+            <MyOrdersPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/create-coupon" element={
+          <ProtectedRoute>
+            <CreateCouponPage />
           </ProtectedRoute>
         } />
         <Route path="/dashboard" element={

@@ -23,15 +23,15 @@ export default function FloatingCart() {
   const { isLoggedIn, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const cartRelevantRoutes = ["/menu", "/", "/dashboard"];
+  const showOnThisRoute = cartRelevantRoutes.includes(location.pathname);
 
   if (
     isLoading ||
     !isLoggedIn ||
     cartSize < 1 ||
     location.pathname === "/cart" ||
-    location.pathname === "/reservations" ||
-    location.pathname === "/menu-card" ||
-    location.pathname === "/my-reservations"
+    !showOnThisRoute
   ) {
     return null;
   }

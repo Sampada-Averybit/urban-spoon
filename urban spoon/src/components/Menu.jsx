@@ -142,6 +142,7 @@ export default function Menu() {
 
             if (!acc[cat]) acc[cat] = [];
             acc[cat].push({
+              id: item._id || item.id,
               name: item.name,
               price: typeof item.price === "number" ? `$${item.price}` : item.price,
               description: item.description,
@@ -207,7 +208,7 @@ export default function Menu() {
 
         <section className="mb-8 flex flex-col items-start gap-6">
           <button 
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/dashboard")}
             className="flex h-10 items-center justify-center gap-2 rounded-full border border-[#f0e8e9] bg-white px-4 text-[0.95rem] font-bold text-[#1a243d] transition-colors hover:bg-[#f8f9fa]"
           >
             <span className="h-4 w-4"><BackArrowIcon /></span>

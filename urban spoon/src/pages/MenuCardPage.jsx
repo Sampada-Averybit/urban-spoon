@@ -41,18 +41,6 @@ export default function MenuCardPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f3f4] text-[#111827]">
-      <header className="border-b border-[rgba(0,0,0,0.06)] bg-[rgba(255,255,255,0.92)] px-5 py-3 backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-[1240px] items-center justify-between">
-          <Link to="/dashboard" className="text-[1.2rem] font-['Playfair_Display',serif] text-[#ef2c5b] no-underline">
-            Urban Spoon
-          </Link>
-          <div className="flex items-center gap-5 text-[0.78rem] font-medium">
-            <Link to="/menu-card" className="text-[#172033] no-underline hover:text-[#ef2c5b]">Menu</Link>
-            <Link to="/reservations" className="text-[#ef2c5b] no-underline">Reservations</Link>
-          </div>
-        </div>
-      </header>
-
       <main className="mx-auto max-w-[1240px] px-4 py-10">
         <section className="text-center">
           <p className="text-[0.72rem] font-semibold tracking-[0.16em] text-[#ef2c5b]">URBAN SPOON SELECTION</p>
@@ -100,9 +88,9 @@ export default function MenuCardPage() {
           <h3 className="text-[1.85rem] font-bold text-[#111827]">
             Experience it <span className="font-['Playfair_Display',serif] text-[#ef2c5b] italic font-normal">tonight</span>
           </h3>
-          <Link to="/reservations" className="mt-4 inline-flex rounded-full bg-[#ef2c5b] px-9 py-3 text-[0.88rem] font-bold text-white no-underline shadow-[0_12px_26px_rgba(239,44,91,0.3)] hover:bg-[#db2551]">
-            Reserve Your Table
-          </Link>
+          <p className="mx-auto mt-2 max-w-[620px] text-[0.95rem] text-[#6b7280]">
+            Book a table or order now to experience our dishes.
+          </p>
         </section>
       </main>
 

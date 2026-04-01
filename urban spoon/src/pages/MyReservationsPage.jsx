@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 function formatDate(dateStr) {
   const date = new Date(`${dateStr}T00:00:00`);
@@ -157,18 +157,6 @@ export default function MyReservationsPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f3f4] text-[#111827]">
-      <header className="border-b border-[rgba(0,0,0,0.06)] bg-[rgba(255,255,255,0.92)] px-5 py-3 backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-[1240px] items-center justify-between">
-          <Link to="/dashboard" className="text-[1.6rem] font-['Playfair_Display',serif] text-[#ef2c5b] no-underline">
-            Urban Spoon
-          </Link>
-          <div className="flex items-center gap-6 text-[0.88rem] font-medium">
-            <Link to="/menu-card" className="text-[#172033] no-underline hover:text-[#ef2c5b]">Menu</Link>
-            <Link to="/my-reservations" className="border-b-2 border-[#ef2c5b] pb-1 text-[#ef2c5b] no-underline">Reservations</Link>
-          </div>
-        </div>
-      </header>
-
       <main className="mx-auto max-w-[1080px] px-4 py-10">
         <div className="mb-8 flex items-start gap-4">
           <button onClick={() => navigate("/reservations")} className="mt-1 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#ef2c5b] shadow-sm">

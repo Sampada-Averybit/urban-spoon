@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { token: authToken, isLoggedIn, login } = useAuth();
+  const { token: authToken, isLoggedIn, login, logout } = useAuth();
   const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -171,9 +171,8 @@ export default function ProfilePage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("urbanSpoonToken");
-    localStorage.removeItem("urbanSpoonUser");
-    navigate("/");
+    logout();
+    window.location.replace("/");
   };
 
   const handlePasswordToggle = () => {
@@ -251,17 +250,17 @@ export default function ProfilePage() {
 
   return (
     <div
-      className="min-h-screen bg-[#fcfafb] font-sans relative overflow-hidden"
+      className="h-[calc(100dvh-4.5rem)] bg-[#fcfafb] font-sans relative overflow-hidden"
       style={{
         background:
-          "radial-gradient(circle at top right, rgba(239, 44, 91, 0.05), transparent 40%), radial-gradient(circle at bottom left, rgba(239, 44, 91, 0.03), transparent 40%), #fbf9fa",
+          "radial-gradient(circle at top right, rgba(239, 44, 91, 0.08), transparent 40%), radial-gradient(circle at bottom left, rgba(17, 24, 39, 0.04), transparent 45%), #fbf9fa",
       }}
     >
       {/* Header Area representing the back bar */}
-      <div className="mx-auto flex max-w-[1240px] items-center justify-between px-6 py-5 max-[760px]:px-4">
+      <div className="mx-auto flex max-w-[1100px] items-center justify-between px-6 py-3 max-[760px]:px-4">
         <button
           onClick={() => navigate(isLoggedIn ? "/dashboard" : "/login", { replace: true })}
-          className="flex items-center gap-3 text-lg font-semibold text-[#12182f] transition-colors hover:text-[#ef2c5b]"
+          className="flex items-center gap-3 rounded-full px-2 py-1 text-lg font-semibold text-[#12182f] transition-colors hover:text-[#ef2c5b]"
         >
           <svg
             width="24"
@@ -278,9 +277,12 @@ export default function ProfilePage() {
           </svg>
           My Profile
         </button>
+        <p className="text-[0.85rem] font-medium text-[#64748b] max-[760px]:hidden">
+          Manage your account details and security settings
+        </p>
       </div>
 
-      <main className="relative z-10 mx-auto max-w-[480px] px-4 pb-12 pt-2">
+      <main className="relative z-10 mx-auto h-[calc(100%-4.25rem)] max-w-[1100px] px-4 pb-4 pt-1 max-[760px]:overflow-y-auto">
         {loading ? (
           <p className="text-center text-[#64748b]">Loading profile...</p>
         ) : error ? (
@@ -288,11 +290,13 @@ export default function ProfilePage() {
             {error}
           </div>
         ) : (
-          <div className="grid gap-4">
-            {/* User Info Card */}
-            <div className="relative mb-1 flex flex-col items-center rounded-[1.2rem] bg-white p-6 shadow-[0_12px_40px_rgba(239,44,91,0.04)]">
-              <div className="relative mb-4">
-                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-[3px] border-white bg-[#1b253b] shadow-md">
+          <div className="grid h-full gap-4 md:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
+            <div className="min-h-0">
+              {/* User Info Card */}
+              <div className="relative mb-1 flex h-full flex-col justify-between rounded-[1.2rem] border border-[rgba(15,23,42,0.06)] bg-white p-5 shadow-[0_12px_40px_rgba(239,44,91,0.05)]">
+              <div>
+              <div className="relative mb-4 mx-auto w-fit">
+                <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-[3px] border-white bg-[#1b253b] shadow-md">
                   <img
                     src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${
                       profile?.name || "Felix"
@@ -318,7 +322,7 @@ export default function ProfilePage() {
                 </button>
               </div>
 
-              <h2 className="mb-1 text-2xl font-bold text-[#12182f]">
+              <h2 className="mb-1 text-center text-2xl font-bold text-[#12182f]">
                 {isEditMode ? (
                   <input
                     type="text"
@@ -333,39 +337,47 @@ export default function ProfilePage() {
                   profile?.name
                 )}
               </h2>
-              <p className="mb-0.5 text-[0.85rem] tracking-wide text-[#6b7280]">
-                {isEditMode ? (
-                  <input
-                    type="text"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    disabled={isSaving}
-                    className="w-full rounded-[0.75rem] border border-[#dbe2ee] px-3 py-2 text-center text-[0.9rem] text-[#6b7280] outline-none focus:border-[#ef2c5b]"
-                    required
-                  />
-                ) : (
-                  profile?.phone
-                )}
-              </p>
-              <p className="mb-5 text-[0.85rem] text-[#6b7280]">
-                {isEditMode ? (
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    disabled={isSaving}
-                    className="w-full rounded-[0.75rem] border border-[#dbe2ee] px-3 py-2 text-center text-[0.9rem] text-[#6b7280] outline-none focus:border-[#ef2c5b]"
-                    required
-                  />
-                ) : (
-                  profile?.email
-                )}
-              </p>
+              <p className="mb-4 text-center text-[0.84rem] text-[#64748b]">Keep your contact details up to date for bookings and notifications.</p>
+
+              <div className="mb-5 grid gap-3 rounded-[0.9rem] bg-[#f8fafc] p-3">
+                <div className="grid gap-1">
+                  <p className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-[#64748b]">Email</p>
+                  {isEditMode ? (
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      disabled={isSaving}
+                      className="w-full rounded-[0.65rem] border border-[#dbe2ee] bg-white px-3 py-2 text-[0.9rem] text-[#0f172a] outline-none focus:border-[#ef2c5b]"
+                      required
+                    />
+                  ) : (
+                    <p className="rounded-[0.65rem] border border-[#e2e8f0] bg-white px-3 py-2 text-[0.9rem] font-medium text-[#0f172a]">{profile?.email || "Not set"}</p>
+                  )}
+                </div>
+
+                <div className="grid gap-1">
+                  <p className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-[#64748b]">Phone</p>
+                  {isEditMode ? (
+                    <input
+                      type="text"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      disabled={isSaving}
+                      className="w-full rounded-[0.65rem] border border-[#dbe2ee] bg-white px-3 py-2 text-[0.9rem] text-[#0f172a] outline-none focus:border-[#ef2c5b]"
+                      required
+                    />
+                  ) : (
+                    <p className="rounded-[0.65rem] border border-[#e2e8f0] bg-white px-3 py-2 text-[0.9rem] font-medium text-[#0f172a]">{profile?.phone || "Not set"}</p>
+                  )}
+                </div>
+              </div>
+              </div>
 
               {isEditMode ? (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center gap-3">
                   <button
                     onClick={handleSaveChanges}
                     disabled={isSaving}
@@ -384,7 +396,7 @@ export default function ProfilePage() {
               ) : (
                 <button
                   onClick={handleEditClick}
-                  className="rounded-full bg-[#ef2c5b] px-8 py-3 text-[0.85rem] font-bold uppercase tracking-wide text-white shadow-[0_6px_20px_rgba(239,44,91,0.25)] transition-transform hover:-translate-y-0.5 hover:bg-[#d91e4a]"
+                  className="mx-auto rounded-full bg-[#ef2c5b] px-8 py-3 text-[0.85rem] font-bold uppercase tracking-wide text-white shadow-[0_6px_20px_rgba(239,44,91,0.25)] transition-transform hover:-translate-y-0.5 hover:bg-[#d91e4a]"
                 >
                   Edit Profile
                 </button>
@@ -401,73 +413,79 @@ export default function ProfilePage() {
                   {updateError}
                 </div>
               )}
-            </div>
-
-            {/* My Orders Card */}
-            <div
-              onClick={() => navigate("/dashboard")}
-              className="group relative flex cursor-pointer items-center gap-4 overflow-hidden rounded-[1rem] bg-[#e4efeb] p-4 transition-colors hover:bg-[#d9e9e3]"
-            >
-              <div className="z-10 rounded-xl bg-white p-2.5 shadow-sm">
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#256c54"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                  <polyline points="10 9 9 9 8 9"></polyline>
-                </svg>
-              </div>
-              <div className="z-10 flex-1">
-                <h3 className="text-[1.05rem] font-bold text-[#134d38]">
-                  My Orders
-                </h3>
-                <p className="mt-0.5 text-[0.7rem] font-bold uppercase tracking-wider text-[#256c54]">
-                  View your history
-                </p>
-              </div>
-              <div className="z-10 text-[#134d38] transition-transform group-hover:translate-x-1">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
-
-              {/* Background watermark */}
-              <div className="pointer-events-none absolute right-4 top-1/2 z-0 -translate-y-1/2 text-[#c8e2d8] opacity-60">
-                <svg
-                  width="70"
-                  height="70"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M11 2v9a4 4 0 0 1-4 4v7h-2v-7a4 4 0 0 1-4-4V2h2v7a2 2 0 0 0 2 2 2 2 0 0 0 2-2V2h2zm6 0v11l-3 3v6h-2v-6l-3-3V2c0 2.5 1.5 5 3 6v4h2V8c1.5-1 3-3.5 3-6z" />
-                </svg>
               </div>
             </div>
 
-            {/* Change Password */}
-            <div className="rounded-[1rem] bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+            <div className="grid content-start gap-4">
+              <p className="px-1 text-[0.72rem] font-bold uppercase tracking-[0.14em] text-[#94a3b8]">
+                Quick Actions
+              </p>
+
+              {/* My Orders Card */}
+              <div
+                onClick={() => navigate("/my-orders")}
+                className="group relative flex cursor-pointer items-center gap-4 overflow-hidden rounded-[1rem] bg-[#e4efeb] p-4 transition-colors hover:bg-[#d9e9e3]"
+              >
+                <div className="z-10 rounded-xl bg-white p-2.5 shadow-sm">
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#256c54"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                  </svg>
+                </div>
+                <div className="z-10 flex-1">
+                  <h3 className="text-[1.05rem] font-bold text-[#134d38]">
+                    My Orders
+                  </h3>
+                  <p className="mt-0.5 text-[0.7rem] font-bold uppercase tracking-wider text-[#256c54]">
+                    View your history
+                  </p>
+                </div>
+                <div className="z-10 text-[#134d38] transition-transform group-hover:translate-x-1">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+
+                {/* Background watermark */}
+                <div className="pointer-events-none absolute right-4 top-1/2 z-0 -translate-y-1/2 text-[#c8e2d8] opacity-60">
+                  <svg
+                    width="70"
+                    height="70"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M11 2v9a4 4 0 0 1-4 4v7h-2v-7a4 4 0 0 1-4-4V2h2v7a2 2 0 0 0 2 2 2 2 0 0 0 2-2V2h2zm6 0v11l-3 3v6h-2v-6l-3-3V2c0 2.5 1.5 5 3 6v4h2V8c1.5-1 3-3.5 3-6z" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Change Password */}
+              <div className="rounded-[1rem] bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
               <div className="flex items-center gap-4">
                 <div className="p-1">
                   <svg
@@ -552,13 +570,13 @@ export default function ProfilePage() {
                   {passwordError}
                 </div>
               )}
-            </div>
+              </div>
 
-            {/* Logout */}
-            <div
-              onClick={handleLogout}
-              className="group flex cursor-pointer items-center gap-4 rounded-[1rem] bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-colors hover:bg-red-50"
-            >
+              {/* Logout */}
+              <div
+                onClick={handleLogout}
+                className="group flex cursor-pointer items-center gap-4 rounded-[1rem] bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-colors hover:bg-red-50"
+              >
               <div className="p-1">
                 <svg
                   width="22"
@@ -593,6 +611,7 @@ export default function ProfilePage() {
                 >
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
+              </div>
               </div>
             </div>
           </div>

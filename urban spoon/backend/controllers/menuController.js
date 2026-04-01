@@ -1,9 +1,33 @@
 const Menu = require('../models/Menu');
+const mongoose = require("mongoose");
+
+async function fetchMenuWithFallback() {
+  const menuItems = await Menu.find();
+  if (Array.isArray(menuItems) && menuItems.length > 0) {
+    return menuItems;
+  }
+
+  const legacyCollections = ["menu", "menuItems"];
+  for (const collectionName of legacyCollections) {
+    const exists = await mongoose.connection.db
+      .listCollections({ name: collectionName })
+      .hasNext();
+
+    if (exists) {
+      const docs = await mongoose.connection.collection(collectionName).find({}).toArray();
+      if (Array.isArray(docs) && docs.length > 0) {
+        return docs;
+      }
+    }
+  }
+
+  return menuItems;
+}
 
 // 1. getAllMenu: Fetch all menu items
 const getAllMenu = async (req, res) => {
   try {
-    const menuItems = await Menu.find();
+    const menuItems = await fetchMenuWithFallback();
     res.status(200).json(menuItems);
   } catch (error) {
     res.status(500).json({ message: error.message });
