@@ -1,8 +1,14 @@
 export async function createCouponApi(payload) {
+  const token = localStorage.getItem("urbanSpoonToken");
+  if (!token) {
+    throw new Error("Not authorized. Please login as admin.");
+  }
+
   const response = await fetch("http://localhost:3000/api/coupons", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(payload),
   });

@@ -1,5 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  getFieldClass,
+  validatePhone,
+  validateEmail,
+  VALIDATION_ERROR_TEXT_CLASS,
+} from "../utils/validation";
 
 const timeSlots = ["7:00 PM", "7:30 PM", "8:00 PM", "8:30 PM", "9:00 PM"];
 
@@ -34,9 +40,21 @@ export default function ReservationPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({
+    phone: "",
+    email: "",
+  });
 
   const updateField = (name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "phone") {
+      setFieldErrors((prev) => ({ ...prev, phone: value.trim() ? validatePhone(value) : "" }));
+    }
+
+    if (name === "email") {
+      setFieldErrors((prev) => ({ ...prev, email: value.trim() ? validateEmail(value) : "" }));
+    }
   };
 
   const adjustGuests = (delta) => {
@@ -50,6 +68,17 @@ export default function ReservationPage() {
     e.preventDefault();
     setSuccessMessage("");
     setErrorMessage("");
+
+    const nextFieldErrors = {
+      phone: validatePhone(formData.phone),
+      email: validateEmail(formData.email),
+    };
+    setFieldErrors(nextFieldErrors);
+
+    if (nextFieldErrors.phone || nextFieldErrors.email) {
+      setErrorMessage("Please fix the highlighted contact fields.");
+      return;
+    }
 
     const token = localStorage.getItem("urbanSpoonToken");
     if (!token) {
@@ -212,9 +241,10 @@ export default function ReservationPage() {
                     value={formData.phone}
                     onChange={(e) => updateField("phone", e.target.value)}
                     placeholder="+1 (555) 000-0000"
-                    className="min-h-[2.9rem] rounded-[0.6rem] border border-[#e7e5e8] bg-[#f2f0f2] px-3.5 text-[0.92rem] outline-none focus:border-[#ef2c5b]"
+                    className={getFieldClass("min-h-[2.9rem] rounded-[0.6rem] border border-[#e7e5e8] bg-[#f2f0f2] px-3.5 text-[0.92rem] outline-none focus:border-[#ef2c5b]", fieldErrors.phone)}
                     required
                   />
+                  {fieldErrors.phone && <p className={VALIDATION_ERROR_TEXT_CLASS}>{fieldErrors.phone}</p>}
                 </label>
               </div>
 
@@ -225,9 +255,10 @@ export default function ReservationPage() {
                   value={formData.email}
                   onChange={(e) => updateField("email", e.target.value)}
                   placeholder="john@example.com"
-                  className="min-h-[2.9rem] rounded-[0.6rem] border border-[#e7e5e8] bg-[#f2f0f2] px-3.5 text-[0.92rem] outline-none focus:border-[#ef2c5b]"
+                  className={getFieldClass("min-h-[2.9rem] rounded-[0.6rem] border border-[#e7e5e8] bg-[#f2f0f2] px-3.5 text-[0.92rem] outline-none focus:border-[#ef2c5b]", fieldErrors.email)}
                   required
                 />
+                {fieldErrors.email && <p className={VALIDATION_ERROR_TEXT_CLASS}>{fieldErrors.email}</p>}
               </label>
             </section>
 

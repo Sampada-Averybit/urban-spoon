@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Sidebar from "../components/Sidebar";
+import AdminTopbar from "../components/AdminTopbar";
+import {
+  getFieldClass,
+  validateEmail,
+  validatePhone,
+  validatePassword,
+  VALIDATION_ERROR_TEXT_CLASS,
+} from "../utils/validation";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { token: authToken, isLoggedIn, login, logout } = useAuth();
+  const { token: authToken, isLoggedIn, login, logout, user: authUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -25,6 +34,13 @@ export default function ProfilePage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccessMessage, setPasswordSuccessMessage] = useState("");
+  const [profileFieldErrors, setProfileFieldErrors] = useState({
+    email: "",
+    phone: "",
+  });
+  const [passwordFieldErrors, setPasswordFieldErrors] = useState({
+    newPassword: "",
+  });
 
   useEffect(() => {
     const storedUserStr = localStorage.getItem("urbanSpoonUser");
@@ -86,6 +102,14 @@ export default function ProfilePage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "email") {
+      setProfileFieldErrors((prev) => ({ ...prev, email: value.trim() ? validateEmail(value) : "" }));
+    }
+
+    if (name === "phone") {
+      setProfileFieldErrors((prev) => ({ ...prev, phone: value.trim() ? validatePhone(value) : "" }));
+    }
   };
 
   const handleEditClick = () => {
@@ -96,6 +120,7 @@ export default function ProfilePage() {
       email: profile?.email || "",
       phone: profile?.phone || "",
     });
+    setProfileFieldErrors({ email: "", phone: "" });
     setIsEditMode(true);
   };
 
@@ -108,11 +133,24 @@ export default function ProfilePage() {
     setIsEditMode(false);
     setSuccessMessage("");
     setUpdateError("");
+    setProfileFieldErrors({ email: "", phone: "" });
   };
 
   const handleSaveChanges = async () => {
     setSuccessMessage("");
     setUpdateError("");
+
+    const nextProfileFieldErrors = {
+      email: validateEmail(formData.email),
+      phone: validatePhone(formData.phone),
+    };
+    setProfileFieldErrors(nextProfileFieldErrors);
+
+    if (nextProfileFieldErrors.email || nextProfileFieldErrors.phone) {
+      setUpdateError("Please fix the highlighted fields.");
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -180,6 +218,7 @@ export default function ProfilePage() {
     setPasswordForm({ currentPassword: "", newPassword: "" });
     setPasswordError("");
     setPasswordSuccessMessage("");
+    setPasswordFieldErrors({ newPassword: "" });
   };
 
   const handlePasswordCancel = () => {
@@ -187,19 +226,35 @@ export default function ProfilePage() {
     setPasswordForm({ currentPassword: "", newPassword: "" });
     setPasswordError("");
     setPasswordSuccessMessage("");
+    setPasswordFieldErrors({ newPassword: "" });
   };
 
   const handlePasswordInputChange = (e) => {
     const { name, value } = e.target;
     setPasswordForm((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "newPassword") {
+      setPasswordFieldErrors((prev) => ({
+        ...prev,
+        newPassword: value ? validatePassword(value) : "",
+      }));
+    }
   };
 
   const handlePasswordSave = async () => {
     setPasswordError("");
     setPasswordSuccessMessage("");
+    setPasswordFieldErrors({ newPassword: "" });
 
     if (!passwordForm.currentPassword || !passwordForm.newPassword) {
       setPasswordError("Please enter current and new password.");
+      return;
+    }
+
+    const newPasswordError = validatePassword(passwordForm.newPassword);
+    if (newPasswordError) {
+      setPasswordFieldErrors({ newPassword: newPasswordError });
+      setPasswordError("Please fix the highlighted fields.");
       return;
     }
 
@@ -248,18 +303,32 @@ export default function ProfilePage() {
     }
   };
 
+  const roleFromContext = String(authUser?.role || "").toLowerCase();
+  const roleFromStorage = String(profile?.role || "").toLowerCase();
+  const isAdminUser = roleFromContext === "admin" || roleFromStorage === "admin";
+  const dashboardTarget = isAdminUser ? "/admin" : "/dashboard";
+  const ordersTarget = isAdminUser ? "/admin/orders" : "/my-orders";
+  const profileContainerClass = isAdminUser
+    ? "h-[100dvh] bg-[#fcfafb] font-sans relative overflow-hidden"
+    : "h-[calc(100dvh-4.5rem)] bg-[#fcfafb] font-sans relative overflow-hidden";
+
   return (
     <div
-      className="h-[calc(100dvh-4.5rem)] bg-[#fcfafb] font-sans relative overflow-hidden"
+      className={profileContainerClass}
       style={{
         background:
           "radial-gradient(circle at top right, rgba(239, 44, 91, 0.08), transparent 40%), radial-gradient(circle at bottom left, rgba(17, 24, 39, 0.04), transparent 45%), #fbf9fa",
       }}
     >
+      {isAdminUser && <AdminTopbar />}
+
+      <div className={isAdminUser ? "mx-auto grid h-[calc(100dvh-5.5rem)] max-w-[1440px] grid-cols-[280px_1fr] max-[1100px]:grid-cols-1" : ""}>
+        {isAdminUser && <Sidebar />}
+        <div className={isAdminUser ? "h-full overflow-hidden" : ""}>
       {/* Header Area representing the back bar */}
       <div className="mx-auto flex max-w-[1100px] items-center justify-between px-6 py-3 max-[760px]:px-4">
         <button
-          onClick={() => navigate(isLoggedIn ? "/dashboard" : "/login", { replace: true })}
+          onClick={() => navigate(isLoggedIn ? dashboardTarget : "/login", { replace: true })}
           className="flex items-center gap-3 rounded-full px-2 py-1 text-lg font-semibold text-[#12182f] transition-colors hover:text-[#ef2c5b]"
         >
           <svg
@@ -349,12 +418,13 @@ export default function ProfilePage() {
                       value={formData.email}
                       onChange={handleChange}
                       disabled={isSaving}
-                      className="w-full rounded-[0.65rem] border border-[#dbe2ee] bg-white px-3 py-2 text-[0.9rem] text-[#0f172a] outline-none focus:border-[#ef2c5b]"
+                      className={getFieldClass("w-full rounded-[0.65rem] border border-[#dbe2ee] bg-white px-3 py-2 text-[0.9rem] text-[#0f172a] outline-none focus:border-[#ef2c5b]", profileFieldErrors.email)}
                       required
                     />
                   ) : (
                     <p className="rounded-[0.65rem] border border-[#e2e8f0] bg-white px-3 py-2 text-[0.9rem] font-medium text-[#0f172a]">{profile?.email || "Not set"}</p>
                   )}
+                  {isEditMode && profileFieldErrors.email && <p className={VALIDATION_ERROR_TEXT_CLASS}>{profileFieldErrors.email}</p>}
                 </div>
 
                 <div className="grid gap-1">
@@ -366,12 +436,13 @@ export default function ProfilePage() {
                       value={formData.phone}
                       onChange={handleChange}
                       disabled={isSaving}
-                      className="w-full rounded-[0.65rem] border border-[#dbe2ee] bg-white px-3 py-2 text-[0.9rem] text-[#0f172a] outline-none focus:border-[#ef2c5b]"
+                      className={getFieldClass("w-full rounded-[0.65rem] border border-[#dbe2ee] bg-white px-3 py-2 text-[0.9rem] text-[#0f172a] outline-none focus:border-[#ef2c5b]", profileFieldErrors.phone)}
                       required
                     />
                   ) : (
                     <p className="rounded-[0.65rem] border border-[#e2e8f0] bg-white px-3 py-2 text-[0.9rem] font-medium text-[#0f172a]">{profile?.phone || "Not set"}</p>
                   )}
+                  {isEditMode && profileFieldErrors.phone && <p className={VALIDATION_ERROR_TEXT_CLASS}>{profileFieldErrors.phone}</p>}
                 </div>
               </div>
               </div>
@@ -421,68 +492,68 @@ export default function ProfilePage() {
                 Quick Actions
               </p>
 
-              {/* My Orders Card */}
-              <div
-                onClick={() => navigate("/my-orders")}
-                className="group relative flex cursor-pointer items-center gap-4 overflow-hidden rounded-[1rem] bg-[#e4efeb] p-4 transition-colors hover:bg-[#d9e9e3]"
-              >
-                <div className="z-10 rounded-xl bg-white p-2.5 shadow-sm">
-                  <svg
-                    width="22"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#256c54"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10 9 9 9 8 9"></polyline>
-                  </svg>
-                </div>
-                <div className="z-10 flex-1">
-                  <h3 className="text-[1.05rem] font-bold text-[#134d38]">
-                    My Orders
-                  </h3>
-                  <p className="mt-0.5 text-[0.7rem] font-bold uppercase tracking-wider text-[#256c54]">
-                    View your history
-                  </p>
-                </div>
-                <div className="z-10 text-[#134d38] transition-transform group-hover:translate-x-1">
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
-                </div>
+              {!isAdminUser && (
+                <div
+                  onClick={() => navigate(ordersTarget)}
+                  className="group relative flex cursor-pointer items-center gap-4 overflow-hidden rounded-[1rem] bg-[#e4efeb] p-4 transition-colors hover:bg-[#d9e9e3]"
+                >
+                  <div className="z-10 rounded-xl bg-white p-2.5 shadow-sm">
+                    <svg
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#256c54"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="16" y1="13" x2="8" y2="13"></line>
+                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                      <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                  </div>
+                  <div className="z-10 flex-1">
+                    <h3 className="text-[1.05rem] font-bold text-[#134d38]">
+                      My Orders
+                    </h3>
+                    <p className="mt-0.5 text-[0.7rem] font-bold uppercase tracking-wider text-[#256c54]">
+                      View your history
+                    </p>
+                  </div>
+                  <div className="z-10 text-[#134d38] transition-transform group-hover:translate-x-1">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </div>
 
-                {/* Background watermark */}
-                <div className="pointer-events-none absolute right-4 top-1/2 z-0 -translate-y-1/2 text-[#c8e2d8] opacity-60">
-                  <svg
-                    width="70"
-                    height="70"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M11 2v9a4 4 0 0 1-4 4v7h-2v-7a4 4 0 0 1-4-4V2h2v7a2 2 0 0 0 2 2 2 2 0 0 0 2-2V2h2zm6 0v11l-3 3v6h-2v-6l-3-3V2c0 2.5 1.5 5 3 6v4h2V8c1.5-1 3-3.5 3-6z" />
-                  </svg>
+                  <div className="pointer-events-none absolute right-4 top-1/2 z-0 -translate-y-1/2 text-[#c8e2d8] opacity-60">
+                    <svg
+                      width="70"
+                      height="70"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M11 2v9a4 4 0 0 1-4 4v7h-2v-7a4 4 0 0 1-4-4V2h2v7a2 2 0 0 0 2 2 2 2 0 0 0 2-2V2h2zm6 0v11l-3 3v6h-2v-6l-3-3V2c0 2.5 1.5 5 3 6v4h2V8c1.5-1 3-3.5 3-6z" />
+                    </svg>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Change Password */}
               <div className="rounded-[1rem] bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
@@ -538,8 +609,9 @@ export default function ProfilePage() {
                     onChange={handlePasswordInputChange}
                     placeholder="New Password"
                     disabled={isPasswordSaving}
-                    className="w-full rounded-[0.75rem] border border-[#dbe2ee] px-3 py-2 text-[0.9rem] text-[#1f2937] outline-none focus:border-[#ef2c5b]"
+                    className={getFieldClass("w-full rounded-[0.75rem] border border-[#dbe2ee] px-3 py-2 text-[0.9rem] text-[#1f2937] outline-none focus:border-[#ef2c5b]", passwordFieldErrors.newPassword)}
                   />
+                  {passwordFieldErrors.newPassword && <p className={VALIDATION_ERROR_TEXT_CLASS}>{passwordFieldErrors.newPassword}</p>}
                   <div className="flex items-center gap-2">
                     <button
                       onClick={handlePasswordSave}
@@ -617,6 +689,8 @@ export default function ProfilePage() {
           </div>
         )}
       </main>
+        </div>
+      </div>
     </div>
   );
 }

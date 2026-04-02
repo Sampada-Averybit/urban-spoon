@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { Link, useNavigate, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import {
+  getFieldClass,
+  validateEmail,
+  validatePassword,
+  VALIDATION_ERROR_TEXT_CLASS,
+} from "../utils/validation";
 
 function BrandIcon() {
   return (
@@ -75,7 +81,7 @@ function SendIcon() {
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isLoggedIn } = useAuth();
+  const { login, isLoggedIn, user } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -83,18 +89,35 @@ export default function LoginPage() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({
+    email: "",
+    password: "",
+  });
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+
+    if (name === "email") {
+      setFieldErrors((prev) => ({ ...prev, email: value.trim() ? validateEmail(value) : "" }));
+    }
+
+    if (name === "password") {
+      setFieldErrors((prev) => ({ ...prev, password: value ? validatePassword(value) : "" }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (!formData.email || !formData.password) {
-      return setError("Please fill out all required fields.");
+    const emailError = validateEmail(formData.email);
+    const passwordError = validatePassword(formData.password);
+    const nextFieldErrors = { email: emailError, password: passwordError };
+    setFieldErrors(nextFieldErrors);
+
+    if (emailError || passwordError) {
+      return setError("Please fix the highlighted fields.");
     }
 
     setLoading(true);
@@ -124,8 +147,10 @@ export default function LoginPage() {
       }
 
       login(data.token, data);
-      
-      const destination = location.state?.from?.pathname || "/dashboard";
+
+      const role = String(data?.role || "user").toLowerCase();
+      const defaultDestination = role === "admin" ? "/admin" : "/dashboard";
+      const destination = location.state?.from?.pathname || defaultDestination;
       navigate(destination, { replace: true });
     } catch (err) {
       setError(err.message);
@@ -135,7 +160,8 @@ export default function LoginPage() {
   };
 
   if (isLoggedIn) {
-    return <Navigate to="/dashboard" replace />;
+    const role = String(user?.role || "user").toLowerCase();
+    return <Navigate to={role === "admin" ? "/admin" : "/dashboard"} replace />;
   }
 
   return (
@@ -169,7 +195,7 @@ export default function LoginPage() {
             
             <label className="grid gap-2">
               <span className="text-[0.95rem] font-semibold text-[#12192f]">Email Address</span>
-              <div className="flex min-h-[3.625rem] items-center gap-3 rounded-[0.875rem] border border-[#dbe2ee] bg-white px-4">
+              <div className={getFieldClass("flex min-h-[3.625rem] items-center gap-3 rounded-[0.875rem] border border-[#dbe2ee] bg-white px-4", fieldErrors.email)}>
                 <div className="h-[1.375rem] w-[1.375rem] shrink-0 text-[#93a1ba]">
                   <MailIcon />
                 </div>
@@ -183,6 +209,7 @@ export default function LoginPage() {
                   required
                 />
               </div>
+              {fieldErrors.email && <p className={VALIDATION_ERROR_TEXT_CLASS}>{fieldErrors.email}</p>}
             </label>
 
             <label className="grid gap-2">
@@ -190,7 +217,7 @@ export default function LoginPage() {
                 <span className="text-[0.95rem] font-semibold text-[#12192f]">Password</span>
                 <a className="font-semibold text-[#ef2c5b] no-underline" href="#forgot">Forgot Password?</a>
               </div>
-              <div className="flex min-h-[3.625rem] items-center gap-3 rounded-[0.875rem] border border-[#dbe2ee] bg-white px-4">
+              <div className={getFieldClass("flex min-h-[3.625rem] items-center gap-3 rounded-[0.875rem] border border-[#dbe2ee] bg-white px-4", fieldErrors.password)}>
                 <div className="h-[1.375rem] w-[1.375rem] shrink-0 text-[#93a1ba]">
                   <LockIcon />
                 </div>
@@ -204,6 +231,7 @@ export default function LoginPage() {
                   required
                 />
               </div>
+              {fieldErrors.password && <p className={VALIDATION_ERROR_TEXT_CLASS}>{fieldErrors.password}</p>}
             </label>
 
             <label className="flex items-center gap-3 text-[#495774]">

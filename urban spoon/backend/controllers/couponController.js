@@ -31,7 +31,41 @@ const getValidCoupons = async (req, res) => {
   }
 };
 
+const getAllCouponsForAdmin = async (req, res) => {
+  try {
+    const coupons = await couponService.listAllCouponsForAdmin();
+    return res.status(200).json({ coupons });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      message: error.message || "Unable to fetch coupons.",
+    });
+  }
+};
+
+const updateCouponStatus = async (req, res) => {
+  try {
+    const couponId = req.params?.id;
+    const { isActive } = req.body || {};
+
+    if (typeof isActive !== "boolean") {
+      return res.status(400).json({ message: "isActive must be a boolean." });
+    }
+
+    const coupon = await couponService.updateCouponActiveStatus(couponId, isActive);
+    return res.status(200).json({
+      message: `Coupon marked as ${isActive ? "active" : "inactive"}.`,
+      coupon,
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      message: error.message || "Unable to update coupon status.",
+    });
+  }
+};
+
 module.exports = {
   createCoupon,
   getValidCoupons,
+  getAllCouponsForAdmin,
+  updateCouponStatus,
 };

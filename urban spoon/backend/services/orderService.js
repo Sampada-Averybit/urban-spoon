@@ -9,6 +9,15 @@ function buildHttpError(status, message) {
   return error;
 }
 
+const ORDER_STATUS_VALUES = [
+  "PLACED",
+  "CONFIRMED",
+  "PREPARING",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+  "CANCELLED",
+];
+
 function normalizeItems(items) {
   if (!Array.isArray(items) || items.length === 0) {
     throw buildHttpError(400, "items must be a non-empty array.");
@@ -164,7 +173,38 @@ async function listOrdersForUser(userId) {
   return orderRepository.findOrdersByUserId(userId);
 }
 
+async function listAllOrdersForAdmin() {
+  return orderRepository.findAllOrders();
+}
+
+async function getOrderDetailsForAdmin(orderId) {
+  if (!orderId) throw buildHttpError(400, "orderId is required.");
+  const order = await orderRepository.findOrderById(orderId);
+  if (!order) throw buildHttpError(404, "Order not found.");
+  return order;
+}
+
+async function updateOrderStatusForAdmin(orderId, orderStatus) {
+  if (!orderId) throw buildHttpError(400, "orderId is required.");
+
+  const normalizedStatus = String(orderStatus || "").trim().toUpperCase();
+  if (!ORDER_STATUS_VALUES.includes(normalizedStatus)) {
+    throw buildHttpError(400, "Invalid order status.");
+  }
+
+  const updated = await orderRepository.updateOrderStatus(orderId, normalizedStatus);
+  if (!updated) {
+    throw buildHttpError(404, "Order not found.");
+  }
+
+  return updated;
+}
+
 module.exports = {
   placeOrder,
   listOrdersForUser,
+  listAllOrdersForAdmin,
+  getOrderDetailsForAdmin,
+  updateOrderStatusForAdmin,
+  ORDER_STATUS_VALUES,
 };

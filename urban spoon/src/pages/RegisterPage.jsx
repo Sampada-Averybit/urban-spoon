@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import {
+  getFieldClass,
+  validatePhone,
+  validateEmail,
+  validatePassword,
+  VALIDATION_ERROR_TEXT_CLASS,
+} from "../utils/validation";
 
 const perks = [
   {
@@ -133,7 +140,7 @@ function SectionIcon({ type }) {
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -144,10 +151,40 @@ export default function RegisterPage() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+  });
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+
+    if (name === "email") {
+      setFieldErrors((prev) => ({ ...prev, email: value.trim() ? validateEmail(value) : "" }));
+    }
+
+    if (name === "phone") {
+      setFieldErrors((prev) => ({ ...prev, phone: value.trim() ? validatePhone(value) : "" }));
+    }
+
+    if (name === "password") {
+      setFieldErrors((prev) => ({
+        ...prev,
+        password: value ? validatePassword(value) : "",
+        confirmPassword:
+          formData.confirmPassword && value !== formData.confirmPassword ? "Passwords do not match." : "",
+      }));
+    }
+
+    if (name === "confirmPassword") {
+      setFieldErrors((prev) => ({
+        ...prev,
+        confirmPassword: value && value !== formData.password ? "Passwords do not match." : "",
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -157,9 +194,20 @@ export default function RegisterPage() {
     if (!formData.name || !formData.email || !formData.phone || !formData.password) {
       return setError("Please fill out all required fields.");
     }
-    if (formData.password !== formData.confirmPassword) {
-      return setError("Passwords do not match.");
+
+    const nextFieldErrors = {
+      email: validateEmail(formData.email),
+      phone: validatePhone(formData.phone),
+      password: validatePassword(formData.password),
+      confirmPassword:
+        formData.password !== formData.confirmPassword ? "Passwords do not match." : "",
+    };
+    setFieldErrors(nextFieldErrors);
+
+    if (Object.values(nextFieldErrors).some(Boolean)) {
+      return setError("Please fix the highlighted fields.");
     }
+
     if (!formData.agreeToTerms) {
       return setError("You must agree to the Terms of Service.");
     }
@@ -201,7 +249,8 @@ export default function RegisterPage() {
   };
 
   if (isLoggedIn) {
-    return <Navigate to="/dashboard" replace />;
+    const role = String(user?.role || "user").toLowerCase();
+    return <Navigate to={role === "admin" ? "/admin" : "/dashboard"} replace />;
   }
 
   return (
@@ -273,7 +322,7 @@ export default function RegisterPage() {
 
               <label className="grid gap-2">
                 <span className="text-[0.95rem] font-semibold text-[#111a31]">Email Address</span>
-                <div className="flex min-h-[3.625rem] items-center gap-3 rounded-[0.875rem] border border-[#dce3f0] bg-white px-4">
+                <div className={getFieldClass("flex min-h-[3.625rem] items-center gap-3 rounded-[0.875rem] border border-[#dce3f0] bg-white px-4", fieldErrors.email)}>
                   <div className="h-[1.375rem] w-[1.375rem] shrink-0 text-[#97a5bc]">
                     <MailIcon />
                   </div>
@@ -287,11 +336,12 @@ export default function RegisterPage() {
                     required
                   />
                 </div>
+                {fieldErrors.email && <p className={VALIDATION_ERROR_TEXT_CLASS}>{fieldErrors.email}</p>}
               </label>
 
               <label className="grid gap-2">
                 <span className="text-[0.95rem] font-semibold text-[#111a31]">Phone Number</span>
-                <div className="flex min-h-[3.625rem] items-center gap-3 rounded-[0.875rem] border border-[#dce3f0] bg-white px-4">
+                <div className={getFieldClass("flex min-h-[3.625rem] items-center gap-3 rounded-[0.875rem] border border-[#dce3f0] bg-white px-4", fieldErrors.phone)}>
                   <div className="h-[1.375rem] w-[1.375rem] shrink-0 text-[#97a5bc]">
                     <PhoneIcon />
                   </div>
@@ -305,12 +355,13 @@ export default function RegisterPage() {
                     required
                   />
                 </div>
+                {fieldErrors.phone && <p className={VALIDATION_ERROR_TEXT_CLASS}>{fieldErrors.phone}</p>}
               </label>
 
               <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
                 <label className="grid gap-2">
                   <span className="text-[0.95rem] font-semibold text-[#111a31]">Password</span>
-                  <div className="flex min-h-[3.625rem] items-center gap-3 rounded-[0.875rem] border border-[#dce3f0] bg-white px-4">
+                  <div className={getFieldClass("flex min-h-[3.625rem] items-center gap-3 rounded-[0.875rem] border border-[#dce3f0] bg-white px-4", fieldErrors.password)}>
                     <div className="h-[1.375rem] w-[1.375rem] shrink-0 text-[#97a5bc]">
                       <LockIcon />
                     </div>
@@ -324,11 +375,12 @@ export default function RegisterPage() {
                       required
                     />
                   </div>
+                  {fieldErrors.password && <p className={VALIDATION_ERROR_TEXT_CLASS}>{fieldErrors.password}</p>}
                 </label>
 
                 <label className="grid gap-2">
                   <span className="text-[0.95rem] font-semibold text-[#111a31]">Confirm Password</span>
-                  <div className="flex min-h-[3.625rem] items-center gap-3 rounded-[0.875rem] border border-[#dce3f0] bg-white px-4">
+                  <div className={getFieldClass("flex min-h-[3.625rem] items-center gap-3 rounded-[0.875rem] border border-[#dce3f0] bg-white px-4", fieldErrors.confirmPassword)}>
                     <div className="h-[1.375rem] w-[1.375rem] shrink-0 text-[#97a5bc]">
                       <ShieldIcon />
                     </div>
@@ -342,6 +394,7 @@ export default function RegisterPage() {
                       required
                     />
                   </div>
+                  {fieldErrors.confirmPassword && <p className={VALIDATION_ERROR_TEXT_CLASS}>{fieldErrors.confirmPassword}</p>}
                 </label>
               </div>
 

@@ -70,7 +70,46 @@ const getUserReservations = async (req, res) => {
   }
 };
 
+const getAllReservationsForAdmin = async (req, res) => {
+  try {
+    const reservations = await Reservation.find({})
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({ reservations });
+  } catch (error) {
+    return res.status(500).json({ message: error.message || "Server error" });
+  }
+};
+
+const confirmReservation = async (req, res) => {
+  try {
+    const reservationId = req.params?.id;
+    if (!reservationId) {
+      return res.status(400).json({ message: "Reservation id is required." });
+    }
+
+    const reservation = await Reservation.findById(reservationId);
+    if (!reservation) {
+      return res.status(404).json({ message: "Reservation not found." });
+    }
+
+    reservation.status = "CONFIRMED";
+    reservation.confirmedAt = new Date();
+    await reservation.save();
+
+    return res.status(200).json({
+      message: "Reservation confirmed successfully.",
+      reservation,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message || "Server error" });
+  }
+};
+
 module.exports = {
   createReservation,
   getUserReservations,
+  getAllReservationsForAdmin,
+  confirmReservation,
 };

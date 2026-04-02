@@ -92,7 +92,36 @@ async function listValidCoupons({ orderAmount } = {}) {
     .lean();
 }
 
+async function listAllCouponsForAdmin() {
+  return Coupon.find({})
+    .sort({ createdAt: -1 })
+    .select("couponCode discountType discountValue minOrderAmount maxDiscount expiryDate isActive createdAt updatedAt")
+    .lean();
+}
+
+async function updateCouponActiveStatus(couponId, isActive) {
+  if (!couponId) {
+    throw buildHttpError(400, "couponId is required.");
+  }
+
+  const updated = await Coupon.findByIdAndUpdate(
+    couponId,
+    { isActive: Boolean(isActive) },
+    { new: true, runValidators: true }
+  )
+    .select("couponCode discountType discountValue minOrderAmount maxDiscount expiryDate isActive createdAt updatedAt")
+    .lean();
+
+  if (!updated) {
+    throw buildHttpError(404, "Coupon not found.");
+  }
+
+  return updated;
+}
+
 module.exports = {
   createCoupon,
   listValidCoupons,
+  listAllCouponsForAdmin,
+  updateCouponActiveStatus,
 };

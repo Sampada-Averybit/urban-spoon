@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createCouponApi } from "../services/couponApi";
+import Sidebar from "../components/Sidebar";
+import AdminTopbar from "../components/AdminTopbar";
 
 function toDateTimeLocalValue(date) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -70,20 +72,25 @@ export default function CreateCouponPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f7f8]">
-      <main className="mx-auto max-w-[760px] px-4 py-10">
-        <button
-          onClick={() => navigate(-1)}
-          className="mb-5 rounded-full border border-[#e5e7eb] bg-white px-4 py-2 text-[0.88rem] font-semibold text-[#334155] hover:bg-[#f8fafc]"
-        >
-          Back
-        </button>
+    <div className="min-h-screen bg-[#f4f4f6]">
+      <AdminTopbar />
 
-        <section className="rounded-[1rem] border border-[#f1d6de] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.04)]">
-          <h1 className="text-[1.8rem] font-bold text-[#0f1833]">Create Coupon</h1>
-          <p className="mt-1 text-[0.92rem] text-[#6b7280]">Configure and create a discount coupon.</p>
+      <main className="mx-auto grid min-h-[calc(100vh-5.5rem)] max-w-[1440px] grid-cols-[280px_1fr] max-[1100px]:grid-cols-1">
+        <Sidebar />
 
-          <form className="mt-6 grid gap-4" onSubmit={handleSubmit}>
+        <section className="px-6 py-6 max-[700px]:px-4">
+          <button
+            onClick={() => navigate("/admin/coupons")}
+            className="mb-5 rounded-full border border-[#e5e7eb] bg-white px-4 py-2 text-[0.88rem] font-semibold text-[#334155] hover:bg-[#f8fafc]"
+          >
+            Back
+          </button>
+
+          <section className="max-w-[760px] rounded-[1rem] border border-[#f1d6de] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.04)]">
+            <h1 className="text-[1.8rem] font-bold text-[#0f1833]">Create Coupon</h1>
+            <p className="mt-1 text-[0.92rem] text-[#6b7280]">Configure and create a discount coupon.</p>
+
+            <form className="mt-6 grid gap-4" onSubmit={handleSubmit}>
             <label className="grid gap-1.5">
               <span className="text-[0.78rem] font-semibold uppercase tracking-[0.08em] text-[#64748b]">Coupon Code</span>
               <input
@@ -190,10 +197,10 @@ export default function CreateCouponPage() {
                 {error}
               </div>
             )}
-          </form>
+            </form>
+          </section>
         </section>
       </main>
     </div>
   );
 }
-

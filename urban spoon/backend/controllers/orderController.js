@@ -41,8 +41,50 @@ const getMyOrders = async (req, res) => {
   }
 };
 
+const getAllOrdersForAdmin = async (req, res) => {
+  try {
+    const orders = await orderService.listAllOrdersForAdmin();
+    return res.status(200).json({ orders });
+  } catch (error) {
+    const statusCode = error.statusCode || 500;
+    return res.status(statusCode).json({
+      message: error.message || "Unable to fetch orders.",
+    });
+  }
+};
+
+const getOrderByIdForAdmin = async (req, res) => {
+  try {
+    const order = await orderService.getOrderDetailsForAdmin(req.params?.id);
+    return res.status(200).json({ order });
+  } catch (error) {
+    const statusCode = error.statusCode || 500;
+    return res.status(statusCode).json({
+      message: error.message || "Unable to fetch order details.",
+    });
+  }
+};
+
+const updateOrderStatusForAdmin = async (req, res) => {
+  try {
+    const { orderStatus } = req.body || {};
+    const order = await orderService.updateOrderStatusForAdmin(req.params?.id, orderStatus);
+    return res.status(200).json({
+      message: "Order status updated successfully.",
+      order,
+    });
+  } catch (error) {
+    const statusCode = error.statusCode || 500;
+    return res.status(statusCode).json({
+      message: error.message || "Unable to update order status.",
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getMyOrders,
+  getAllOrdersForAdmin,
+  getOrderByIdForAdmin,
+  updateOrderStatusForAdmin,
 };
-
