@@ -7,7 +7,11 @@ async function fetchMenuWithFallback() {
     return menuItems;
   }
 
-  const legacyCollections = ["menu", "menuItems"];
+  if (!mongoose.connection?.db) {
+    return menuItems;
+  }
+
+  const legacyCollections = ["menu", "menuItems", "menuitems"];
   for (const collectionName of legacyCollections) {
     const exists = await mongoose.connection.db
       .listCollections({ name: collectionName })
@@ -24,6 +28,38 @@ async function fetchMenuWithFallback() {
   return menuItems;
 }
 
+async function fetchMenuByIdWithFallback(id) {
+  const item = await Menu.findById(id);
+  if (item) {
+    return item;
+  }
+
+  if (!mongoose.connection?.db) {
+    return null;
+  }
+
+  const legacyCollections = ["menu", "menuItems", "menuitems"];
+  for (const collectionName of legacyCollections) {
+    const exists = await mongoose.connection.db
+      .listCollections({ name: collectionName })
+      .hasNext();
+
+    if (!exists) {
+      continue;
+    }
+
+    const doc = await mongoose.connection
+      .collection(collectionName)
+      .findOne({ _id: new mongoose.Types.ObjectId(id) });
+
+    if (doc) {
+      return doc;
+    }
+  }
+
+  return null;
+}
+
 // 1. getAllMenu: Fetch all menu items
 const getAllMenu = async (req, res) => {
   try {
@@ -37,7 +73,13 @@ const getAllMenu = async (req, res) => {
 // 2. getMenuById: Fetch item using req.params.id
 const getMenuById = async (req, res) => {
   try {
-    const menuItem = await Menu.findById(req.params.id);
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid menu item id" });
+    }
+
+    const menuItem = await fetchMenuByIdWithFallback(id);
     if (!menuItem) {
       return res.status(404).json({ message: 'Menu item not found' });
     }
