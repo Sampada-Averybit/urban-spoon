@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 function formatPrice(price) {
-  if (typeof price === "number") return `$${price.toFixed(2)}`;
+  if (typeof price === "number") return `₹${price.toFixed(2)}`;
   const n = Number(price);
-  if (!Number.isNaN(n)) return `$${n.toFixed(2)}`;
-  return String(price || "$0");
+  if (!Number.isNaN(n)) return `₹${n.toFixed(2)}`;
+  return "₹0.00";
 }
 
 export default function MenuCardPage() {

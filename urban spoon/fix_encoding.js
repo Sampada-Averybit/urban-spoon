@@ -1,3 +1,4 @@
+// Possibly unused — review needed
 const fs = require('fs');
 const path = require('path');
 
@@ -83,4 +84,3 @@ processDir(projectRoot);
 console.log('Fix complete.');
 console.log('Modified files count:', modifiedFilesCount);
 console.log('Files:', JSON.stringify(modifiedFilesList, null, 2));
-

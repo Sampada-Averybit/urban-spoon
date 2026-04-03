@@ -10,6 +10,19 @@ const tabSectionMap = {
   Dessert: ["dessert"],
 };
 
+function formatPriceInRupees(price) {
+  const numericPrice = Number(price);
+  if (!Number.isNaN(numericPrice)) {
+    return `₹${numericPrice.toFixed(2)}`;
+  }
+  return "₹0.00";
+}
+
+function parsePriceNumber(price) {
+  const numericPrice = Number(String(price).replace(/[^\d.-]/g, ""));
+  return Number.isNaN(numericPrice) ? 0 : numericPrice;
+}
+
 
 function BackArrowIcon() {
   return (
@@ -144,7 +157,7 @@ export default function Menu() {
             acc[cat].push({
               id: item._id || item.id,
               name: item.name,
-              price: typeof item.price === "number" ? `$${item.price}` : item.price,
+              price: formatPriceInRupees(item.price),
               description: item.description,
               image: item.imageUrl || "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?auto=format&fit=crop&w=900&q=80",
               badge: "New",
@@ -185,7 +198,7 @@ export default function Menu() {
   }, [activeTab, searchQuery, sections]);
 
   function handleAddToCartLocal(item) {
-    const priceValue = Number(item.price.replace("$", ""));
+    const priceValue = parsePriceNumber(item.price);
     addToCart({ ...item, price: priceValue });
   }
 

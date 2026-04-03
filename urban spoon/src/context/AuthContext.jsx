@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
       try {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
-      } catch (error) {
+      } catch {
         console.error('Failed to parse user data from localStorage');
         localStorage.removeItem('urbanSpoonToken');
         localStorage.removeItem('urbanSpoonUser');

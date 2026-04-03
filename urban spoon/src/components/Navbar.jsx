@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const baseNavLinkClass =
@@ -55,7 +55,6 @@ function getContextualItems({ isLoggedIn, pathname, userRole }) {
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
   const menuRef = useRef(null);
   const { isLoggedIn, user, isLoading, logout } = useAuth();
 

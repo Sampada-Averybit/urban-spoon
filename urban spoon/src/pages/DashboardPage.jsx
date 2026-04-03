@@ -1,54 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useCart } from "../context/CartContext";
 
 // =======================
 // SVG ICONS
 // =======================
-function BrandIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-full w-full">
-      <path
-        d="M6 3V14M10 3V14M8 14V21M15 3V8M19 3V21M15 8H19"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function CartIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-full w-full">
-      <path d="M5.5 5H4M5.5 5L7 16H18.5L20 8H6.5 M7 16V18.5C7 19.3 7.7 20 8.5 20C9.3 20 10 19.3 10 18.5 M15.5 16V18.5C15.5 19.3 16.2 20 17 20C17.8 20 18.5 19.3 18.5 18.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function StarIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className="h-full w-full">
       <path d="M12 3.5L14.5 8.8L20.2 9.4L16 13.3L17.2 19L12 16L6.8 19L8 13.3L3.8 9.4L9.5 8.8L12 3.5Z" fill="#FBBF24" />
-    </svg>
-  );
-}
-
-function AddToCartIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-full w-full">
-      <path d="M4 12H20M12 4V20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function UserIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-[70%] w-[70%]">
-       <circle cx="12" cy="8" r="3.3" />
-       <path d="M5.5 19C6.7 15.9 9 14.5 12 14.5C15 14.5 17.3 15.9 18.5 19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
@@ -119,7 +78,7 @@ export default function DashboardPage() {
     window.history.pushState(null, null, window.location.pathname);
     
     // Listen for the popstate event (which fires when the user clicks back)
-    const handlePopState = (event) => {
+    const handlePopState = () => {
       // Push another state onto the stack, effectively canceling the back action
       window.history.pushState(null, null, window.location.pathname);
     };
