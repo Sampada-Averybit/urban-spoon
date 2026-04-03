@@ -10,15 +10,16 @@ const couponRoutes = require("./routes/couponRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const MONGO_URI = process.env.MONGO_URI;
+
+if (!MONGO_URI) {
+  console.error("MONGO_URI is not set. Please configure it in your environment.");
+  process.exit(1);
+}
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-// Database Connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB connected successfully'))
-  .catch((err) => console.error('MongoDB connection error:', err));
 
 // API Routes
 app.use('/api/menu', menuRoutes);
@@ -46,7 +47,17 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+async function startServer() {
+  try {
+    await mongoose.connect(MONGO_URI);
+    console.log("MongoDB connected successfully");
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("MongoDB connection error:", err.message || err);
+    process.exit(1);
+  }
+}
+
+startServer();
