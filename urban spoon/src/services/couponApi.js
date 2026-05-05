@@ -1,10 +1,12 @@
+import { apiUrl } from "./apiClient";
+
 export async function createCouponApi(payload) {
   const token = localStorage.getItem("urbanSpoonToken");
   if (!token) {
     throw new Error("Not authorized. Please login as admin.");
   }
 
-  const response = await fetch("http://localhost:3000/api/coupons", {
+  const response = await fetch(apiUrl("/api/coupons"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -33,7 +35,7 @@ export async function fetchValidCouponsApi(orderAmount) {
     ? `?orderAmount=${encodeURIComponent(orderAmount)}`
     : "";
 
-  const response = await fetch(`http://localhost:3000/api/coupons/valid${suffix}`);
+  const response = await fetch(apiUrl(`/api/coupons/valid${suffix}`));
 
   const raw = await response.text();
   let data = {};

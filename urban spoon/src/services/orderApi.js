@@ -1,10 +1,12 @@
+import { apiUrl } from "./apiClient";
+
 export async function placeOrderApi({ items, couponCode }) {
   const token = localStorage.getItem("urbanSpoonToken");
   if (!token) {
     throw new Error("Please login to place an order.");
   }
 
-  const response = await fetch("http://localhost:3000/api/orders", {
+  const response = await fetch(apiUrl("/api/orders"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -37,7 +39,7 @@ export async function fetchMyOrdersApi() {
     throw new Error("Please login to view orders.");
   }
 
-  const response = await fetch("http://localhost:3000/api/orders", {
+  const response = await fetch(apiUrl("/api/orders"), {
     headers: {
       Authorization: `Bearer ${token}`,
     },

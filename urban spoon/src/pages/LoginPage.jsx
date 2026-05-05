@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { apiUrl } from "../services/apiClient";
 import { Link, useNavigate, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -122,7 +123,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:3000/api/users/login", {
+      const response = await fetch(apiUrl("/api/users/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

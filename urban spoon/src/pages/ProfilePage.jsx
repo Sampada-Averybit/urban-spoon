@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { apiUrl } from "../services/apiClient";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
@@ -64,7 +65,7 @@ export default function ProfilePage() {
       return;
     }
 
-    fetch("http://localhost:3000/api/users/profile", {
+    fetch(apiUrl("/api/users/profile"), {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -160,7 +161,7 @@ export default function ProfilePage() {
         return;
       }
 
-      const response = await fetch("http://localhost:3000/api/users/update-profile", {
+      const response = await fetch(apiUrl("/api/users/update-profile"), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -266,7 +267,7 @@ export default function ProfilePage() {
 
     setIsPasswordSaving(true);
     try {
-      const response = await fetch("http://localhost:3000/api/user/change-password", {
+      const response = await fetch(apiUrl("/api/user/change-password"), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

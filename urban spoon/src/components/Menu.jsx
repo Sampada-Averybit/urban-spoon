@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { apiUrl } from "../services/apiClient";
 
 const tabs = ["Starters", "Main Course", "Drinks", "Dessert"];
 const tabSectionMap = {
@@ -141,7 +142,7 @@ export default function Menu() {
   const [sections, setSections] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/menu")
+    fetch(apiUrl("/api/menu"))
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {

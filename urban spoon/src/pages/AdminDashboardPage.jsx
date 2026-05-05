@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import AdminTopbar from "../components/AdminTopbar";
+import { apiUrl } from "../services/apiClient";
 
 function ListIcon() {
   return (
@@ -54,13 +55,13 @@ export default function AdminDashboardPage() {
 
       try {
         const [ordersRes, reservationsRes, couponsRes] = await Promise.all([
-          fetch("http://localhost:3000/api/orders/admin", {
+          fetch(apiUrl("/api/orders/admin"), {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch("http://localhost:3000/api/reservations/admin", {
+          fetch(apiUrl("/api/reservations/admin"), {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch("http://localhost:3000/api/coupons", {
+          fetch(apiUrl("/api/coupons"), {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -71,15 +72,42 @@ export default function AdminDashboardPage() {
           couponsRes.text(),
         ]);
 
-        const ordersData = ordersRaw ? JSON.parse(ordersRaw) : {};
-        const reservationsData = reservationsRaw ? JSON.parse(reservationsRaw) : {};
-        const couponsData = couponsRaw ? JSON.parse(couponsRaw) : {};
+        let orders = [];
+        let reservations = [];
+        let coupons = [];
 
-        if (!ordersRes.ok || !reservationsRes.ok || !couponsRes.ok) return;
+        if (ordersRes.ok) {
+          try {
+            const ordersData = ordersRaw ? JSON.parse(ordersRaw) : {};
+            orders = Array.isArray(ordersData?.orders) ? ordersData.orders : [];
+          } catch (e) {
+            console.error("Failed to parse orders data:", e);
+          }
+        } else {
+          console.error("Orders API failed:", ordersRes.status, ordersRaw);
+        }
 
-        const orders = Array.isArray(ordersData?.orders) ? ordersData.orders : [];
-        const reservations = Array.isArray(reservationsData?.reservations) ? reservationsData.reservations : [];
-        const coupons = Array.isArray(couponsData?.coupons) ? couponsData.coupons : [];
+        if (reservationsRes.ok) {
+          try {
+            const reservationsData = reservationsRaw ? JSON.parse(reservationsRaw) : {};
+            reservations = Array.isArray(reservationsData?.reservations) ? reservationsData.reservations : [];
+          } catch (e) {
+            console.error("Failed to parse reservations data:", e);
+          }
+        } else {
+          console.error("Reservations API failed:", reservationsRes.status, reservationsRaw);
+        }
+
+        if (couponsRes.ok) {
+          try {
+            const couponsData = couponsRaw ? JSON.parse(couponsRaw) : {};
+            coupons = Array.isArray(couponsData?.coupons) ? couponsData.coupons : [];
+          } catch (e) {
+            console.error("Failed to parse coupons data:", e);
+          }
+        } else {
+          console.error("Coupons API failed:", couponsRes.status, couponsRaw);
+        }
 
         const activeOrders = orders.filter(
           (order) => !["DELIVERED", "CANCELLED"].includes(String(order?.orderStatus || ""))
@@ -108,13 +136,13 @@ export default function AdminDashboardPage() {
           tableBookings,
           activeCoupons,
         });
-      } catch {
-        // Keep UI stable if dashboard metric fetch fails.
+      } catch (error) {
+        console.error("Dashboard metrics fetch error:", error);
       }
     };
 
     fetchMetrics();
-    const timer = setInterval(fetchMetrics, 30000);
+    const timer = setInterval(fetchMetrics, 10000);
     return () => clearInterval(timer);
   }, []);
 

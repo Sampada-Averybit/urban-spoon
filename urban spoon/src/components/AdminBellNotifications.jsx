@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiUrl } from "../services/apiClient";
 
 function BellIcon() {
   return (
@@ -44,10 +45,10 @@ export default function AdminBellNotifications() {
     setLoading(true);
     try {
       const [ordersRes, reservationsRes] = await Promise.all([
-        fetch("http://localhost:3000/api/orders/admin", {
+        fetch(apiUrl("/api/orders/admin"), {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch("http://localhost:3000/api/reservations/admin", {
+        fetch(apiUrl("/api/reservations/admin"), {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);

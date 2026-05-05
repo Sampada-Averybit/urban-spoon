@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { apiUrl } from "../services/apiClient";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import AdminTopbar from "../components/AdminTopbar";
@@ -48,7 +49,7 @@ export default function AdminAddMenuPage() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:3000/api/menu", {
+      const response = await fetch(apiUrl("/api/menu"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

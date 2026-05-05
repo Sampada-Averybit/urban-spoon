@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiUrl } from "../services/apiClient";
 
 function formatDate(dateStr) {
   const date = new Date(`${dateStr}T00:00:00`);
@@ -110,7 +111,7 @@ export default function MyReservationsPage() {
       return;
     }
 
-    fetch("http://localhost:3000/api/reservations", {
+    fetch(apiUrl("/api/reservations"), {
       headers: {
         Authorization: `Bearer ${token}`,
       },

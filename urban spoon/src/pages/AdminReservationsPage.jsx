@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { apiUrl } from "../services/apiClient";
 import Sidebar from "../components/Sidebar";
 import AdminTopbar from "../components/AdminTopbar";
 
@@ -25,7 +26,7 @@ export default function AdminReservationsPage() {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/api/reservations/admin", {
+      const response = await fetch(apiUrl("/api/reservations/admin"), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -73,7 +74,7 @@ export default function AdminReservationsPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/reservations/${reservationId}/confirm`, {
+      const response = await fetch(apiUrl(`/api/reservations/${reservationId}/confirm`), {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,

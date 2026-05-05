@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { apiUrl } from "../services/apiClient";
 import { Link } from "react-router-dom";
 
 // =======================
@@ -50,7 +51,7 @@ export default function DashboardPage() {
   const firstName = user?.name ? user.name.split(" ")[0] : "Guest";
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/menu")
+    fetch(apiUrl("/api/menu"))
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {

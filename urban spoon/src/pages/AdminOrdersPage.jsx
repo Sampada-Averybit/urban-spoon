@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { apiUrl } from "../services/apiClient";
 import Sidebar from "../components/Sidebar";
 import AdminTopbar from "../components/AdminTopbar";
 
@@ -59,7 +60,7 @@ export default function AdminOrdersPage() {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/api/orders/admin", {
+      const response = await fetch(apiUrl("/api/orders/admin"), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -119,7 +120,7 @@ export default function AdminOrdersPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/orders/admin/${orderId}/status`, {
+      const response = await fetch(apiUrl(`/api/orders/admin/${orderId}/status`), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

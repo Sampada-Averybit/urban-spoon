@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { apiUrl } from "../services/apiClient";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import AdminTopbar from "../components/AdminTopbar";
@@ -56,7 +57,7 @@ export default function AdminMenuManagementPage() {
       setLoading(true);
       setError("");
       try {
-        const response = await fetch("http://localhost:3000/api/menu");
+        const response = await fetch(apiUrl("/api/menu"));
         const raw = await response.text();
         let data = [];
         try {
@@ -123,7 +124,7 @@ export default function AdminMenuManagementPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/menu/${itemId}`, {
+      const response = await fetch(apiUrl(`/api/menu/${itemId}`), {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

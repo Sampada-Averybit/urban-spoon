@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { apiUrl } from "../services/apiClient";
 import { Link } from "react-router-dom";
 
 function formatPrice(price) {
@@ -12,7 +13,7 @@ export default function MenuCardPage() {
   const [menuItems, setMenuItems] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/menu")
+    fetch(apiUrl("/api/menu"))
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) setMenuItems(data);

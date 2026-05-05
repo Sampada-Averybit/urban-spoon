@@ -19,7 +19,15 @@ if (!MONGO_URI) {
 }
 
 // Middleware
-app.use(cors());
+const corsOptions = {};
+const corsOrigin = process.env.CORS_ORIGIN || "*";
+if (corsOrigin !== "*") {
+  corsOptions.origin = corsOrigin
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // API Routes

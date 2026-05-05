@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { apiUrl } from "../services/apiClient";
 import { Link } from "react-router-dom";
 import {
   getFieldClass,
@@ -88,7 +89,7 @@ export default function ReservationPage() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("http://localhost:3000/api/reservations", {
+      const response = await fetch(apiUrl("/api/reservations"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
