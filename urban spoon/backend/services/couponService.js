@@ -119,9 +119,26 @@ async function updateCouponActiveStatus(couponId, isActive) {
   return updated;
 }
 
+async function deleteCouponById(couponId) {
+  if (!couponId) {
+    throw buildHttpError(400, "couponId is required.");
+  }
+
+  const deleted = await Coupon.findByIdAndDelete(couponId)
+    .select("couponCode discountType discountValue minOrderAmount maxDiscount expiryDate isActive createdAt updatedAt")
+    .lean();
+
+  if (!deleted) {
+    throw buildHttpError(404, "Coupon not found.");
+  }
+
+  return deleted;
+}
+
 module.exports = {
   createCoupon,
   listValidCoupons,
   listAllCouponsForAdmin,
   updateCouponActiveStatus,
+  deleteCouponById,
 };

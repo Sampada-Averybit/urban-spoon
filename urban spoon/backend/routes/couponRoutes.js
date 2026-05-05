@@ -16,4 +16,7 @@ router.post("/", protect, authorizeRoles(ROLES.ADMIN), couponController.createCo
 // PATCH /api/coupons/:id/status
 router.patch("/:id/status", protect, authorizeRoles(ROLES.ADMIN), couponController.updateCouponStatus);
 
+// DELETE /api/coupons/:id
+router.delete("/:id", protect, authorizeRoles(ROLES.ADMIN), couponController.deleteCoupon);
+
 module.exports = router;

@@ -63,9 +63,25 @@ const updateCouponStatus = async (req, res) => {
   }
 };
 
+const deleteCoupon = async (req, res) => {
+  try {
+    const couponId = req.params?.id;
+    const coupon = await couponService.deleteCouponById(couponId);
+    return res.status(200).json({
+      message: "Coupon deleted successfully.",
+      coupon,
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      message: error.message || "Unable to delete coupon.",
+    });
+  }
+};
+
 module.exports = {
   createCoupon,
   getValidCoupons,
   getAllCouponsForAdmin,
   updateCouponStatus,
+  deleteCoupon,
 };

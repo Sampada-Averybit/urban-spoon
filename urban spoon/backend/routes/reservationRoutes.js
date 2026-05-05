@@ -15,4 +15,10 @@ router.get("/admin", protect, authorizeRoles(ROLES.ADMIN), reservationController
 // PATCH /api/reservations/:id/confirm
 router.patch("/:id/confirm", protect, authorizeRoles(ROLES.ADMIN), reservationController.confirmReservation);
 
+// PUT /api/reservations/:id
+router.put("/:id", protect, reservationController.updateReservation);
+
+// DELETE /api/reservations/:id
+router.delete("/:id", protect, reservationController.deleteReservation);
+
 module.exports = router;
