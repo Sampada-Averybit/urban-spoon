@@ -12,9 +12,15 @@ const couponRoutes = require("./routes/couponRoutes");
 const app = express();
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI;
+const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!MONGO_URI) {
   console.error("MONGO_URI is not set. Please configure it in your environment.");
+  process.exit(1);
+}
+
+if (!JWT_SECRET) {
+  console.error("JWT_SECRET is not set. Please configure it in your environment.");
   process.exit(1);
 }
 
