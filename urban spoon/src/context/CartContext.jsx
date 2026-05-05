@@ -1,18 +1,36 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext.jsx';
 
 const CartContext = createContext();
 
+const getCartStorageKey = (user) => {
+  if (!user) {
+    return 'urbanSpoonCart_guest';
+  }
+
+  const userId = user._id || user.id || user.email || 'user';
+  return `urbanSpoonCart_${userId}`;
+};
+
 export function CartProvider({ children }) {
-  // Initialize from localized storage to sustain sessions naturally
-  const [cartItems, setCartItems] = useState(() => {
-    const savedCart = localStorage.getItem('urbanSpoonCart');
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
+  const { user } = useAuth();
+  const [cartItems, setCartItems] = useState([]);
+
+  useEffect(() => {
+    const key = getCartStorageKey(user);
+    const savedCart = localStorage.getItem(key);
+    if (savedCart) {
+      setCartItems(JSON.parse(savedCart));
+    } else {
+      setCartItems([]);
+    }
+  }, [user]);
 
   // Automatically write any item updates natively straight to storage
   useEffect(() => {
-    localStorage.setItem('urbanSpoonCart', JSON.stringify(cartItems));
-  }, [cartItems]);
+    const key = getCartStorageKey(user);
+    localStorage.setItem(key, JSON.stringify(cartItems));
+  }, [cartItems, user]);
 
   const addToCart = (newItem) => {
     setCartItems((prev) => {
