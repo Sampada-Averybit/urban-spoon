@@ -130,7 +130,7 @@ const forgotPassword = async (req, res) => {
 
     const { principal } = await findPrincipalByEmail(normalizedEmail);
     if (!principal) {
-      return res.status(404).json({ message: "No account found with that email" });
+      return res.status(200).json({ message: "If an account exists, a reset link has been sent." });
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex");
@@ -159,7 +159,7 @@ const forgotPassword = async (req, res) => {
       throw mailError;
     }
 
-    return res.status(200).json({ message: "Password reset link sent to your email." });
+    return res.status(200).json({ message: "If an account exists, a reset link has been sent." });
   } catch (error) {
     return res.status(500).json({ message: error.message || "Server error" });
   }
