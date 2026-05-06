@@ -10,6 +10,11 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+coverage
+.vercel
+
+# Backend runtime artifacts
+backend/node_modules
 
 # Environment files
 .env

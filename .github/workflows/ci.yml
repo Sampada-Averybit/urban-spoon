@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  # Run CI on every push to the main branch.
+  push:
+    branches:
+      - main
+
+  # Optional manual trigger from the GitHub Actions tab.
+  workflow_dispatch:
+
+# Cancel older in-progress runs on the same branch to save CI minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend Build (Vercel-ready)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        # Frontend app folder.
+        working-directory: urban spoon
+
+    steps:
+      # 1) Get source code.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2) Install Node.js 20 and enable npm dependency caching.
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: urban spoon/package-lock.json
+
+      # 3) Clean install dependencies for reproducible builds.
+      - name: Install frontend dependencies
+        run: npm ci
+
+      # 4) Build frontend to verify production build health.
+      - name: Build frontend
+        run: npm run build
+
+  backend:
+    name: Backend Validation (Render-ready)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        # Backend API folder.
+        working-directory: urban spoon/backend
+
+    steps:
+      # 1) Get source code.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2) Install Node.js 20 and enable npm dependency caching.
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: urban spoon/backend/package-lock.json
+
+      # 3) Clean install dependencies.
+      - name: Install backend dependencies
+        run: npm ci
+
+      # 4) Run backend validation checks.
+      - name: Run backend checks
+        run: npm run check
