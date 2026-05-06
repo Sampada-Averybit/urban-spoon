@@ -7,6 +7,8 @@ import HomePage from "./pages/HomePage";
 import MenuPage from "./pages/MenuPage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DashboardPage from "./pages/DashboardPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminMenuManagementPage from "./pages/AdminMenuManagementPage";
@@ -56,6 +58,8 @@ export default function App() {
     location.pathname === "/menu" ||
     location.pathname === "/register" ||
     location.pathname === "/login" ||
+    location.pathname === "/forgot-password" ||
+    location.pathname.startsWith("/reset-password/") ||
     location.pathname === "/dashboard" ||
     location.pathname === "/profile" ||
     location.pathname === "/reservations" ||
@@ -141,6 +145,8 @@ export default function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {!useAdminLayout && <FloatingCart />}

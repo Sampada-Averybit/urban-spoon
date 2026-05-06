@@ -2,7 +2,9 @@ const User = require("../models/User");
 const Admin = require("../models/Admin");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const { ROLES } = require("../middleware/authMiddleware");
+const { sendPasswordResetEmail } = require("../services/emailService");
 
 const ADMIN_EMAIL_SUFFIX = "@urbanspoon.com";
 
@@ -13,6 +15,8 @@ const signAuthToken = (id, role) =>
   jwt.sign({ id, role }, process.env.JWT_SECRET, {
     expiresIn: "7d",
   });
+const PASSWORD_RESET_TOKEN_TTL_MS = 15 * 60 * 1000;
+const PASSWORD_SPECIAL_CHARACTER_REGEX = /[@#$%&*]/;
 
 const buildAuthResponse = (principal, role, token) => ({
   _id: principal._id,
@@ -28,6 +32,28 @@ const getCurrentPrincipalModel = (req) => {
   if (role === ROLES.ADMIN) return Admin;
   if (role === ROLES.USER) return User;
   return null;
+};
+
+const getPasswordValidationMessage = (password) => {
+  const value = String(password || "");
+  if (!value) return "Password is required.";
+  if (value.length < 6) return "Password must be at least 6 characters.";
+  if (!PASSWORD_SPECIAL_CHARACTER_REGEX.test(value)) {
+    return "Password must include at least one special character (@, #, $, %, &, *).";
+  }
+  return "";
+};
+
+const findPrincipalByEmail = async (normalizedEmail) => {
+  let principal = await Admin.findOne({ email: normalizedEmail });
+  let role = ROLES.ADMIN;
+
+  if (!principal) {
+    principal = await User.findOne({ email: normalizedEmail });
+    role = ROLES.USER;
+  }
+
+  return { principal, role };
 };
 
 const registerUser = async (req, res) => {
@@ -77,13 +103,7 @@ const loginUser = async (req, res) => {
 
     const normalizedEmail = normalizeEmail(email);
 
-    let principal = await Admin.findOne({ email: normalizedEmail });
-    let role = ROLES.ADMIN;
-
-    if (!principal) {
-      principal = await User.findOne({ email: normalizedEmail });
-      role = ROLES.USER;
-    }
+    const { principal, role } = await findPrincipalByEmail(normalizedEmail);
 
     if (!principal) {
       return res.status(400).json({ message: 'Invalid credentials' });
@@ -98,6 +118,95 @@ const loginUser = async (req, res) => {
     res.status(200).json(buildAuthResponse(principal, role, token));
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+const forgotPassword = async (req, res) => {
+  try {
+    const normalizedEmail = normalizeEmail(req.body?.email);
+    if (!normalizedEmail) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const { principal } = await findPrincipalByEmail(normalizedEmail);
+    if (!principal) {
+      return res.status(404).json({ message: "No account found with that email" });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const hashedResetToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+    principal.resetPasswordToken = hashedResetToken;
+    principal.resetPasswordExpires = new Date(Date.now() + PASSWORD_RESET_TOKEN_TTL_MS);
+    await principal.save();
+
+    const frontendBaseUrl = String(process.env.FRONTEND_URL || "").trim();
+    if (!frontendBaseUrl) {
+      return res.status(500).json({ message: "FRONTEND_URL is not configured." });
+    }
+
+    const resetUrl = `${frontendBaseUrl.replace(/\/+$/g, "")}/reset-password/${resetToken}`;
+    try {
+      await sendPasswordResetEmail({
+        to: principal.email,
+        resetUrl,
+        name: principal.name,
+      });
+    } catch (mailError) {
+      principal.resetPasswordToken = null;
+      principal.resetPasswordExpires = null;
+      await principal.save();
+      throw mailError;
+    }
+
+    return res.status(200).json({ message: "Password reset link sent to your email." });
+  } catch (error) {
+    return res.status(500).json({ message: error.message || "Server error" });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const rawToken = String(req.params?.token || "").trim();
+    const { newPassword, confirmPassword } = req.body || {};
+
+    if (!rawToken) {
+      return res.status(400).json({ message: "Reset token is required." });
+    }
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "New password and confirm password are required." });
+    }
+    const passwordValidationMessage = getPasswordValidationMessage(newPassword);
+    if (passwordValidationMessage) {
+      return res.status(400).json({ message: passwordValidationMessage });
+    }
+    if (String(newPassword) !== String(confirmPassword)) {
+      return res.status(400).json({ message: "Passwords do not match." });
+    }
+
+    const hashedResetToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const tokenFilter = {
+      resetPasswordToken: hashedResetToken,
+      resetPasswordExpires: { $gt: new Date() },
+    };
+
+    let principal = await Admin.findOne(tokenFilter);
+    if (!principal) {
+      principal = await User.findOne(tokenFilter);
+    }
+    if (!principal) {
+      return res.status(400).json({ message: "Invalid or expired reset token." });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    principal.password = hashedPassword;
+    principal.resetPasswordToken = null;
+    principal.resetPasswordExpires = null;
+    await principal.save();
+
+    return res.status(200).json({ message: "Password has been reset successfully." });
+  } catch (error) {
+    return res.status(500).json({ message: error.message || "Server error" });
   }
 };
 
@@ -210,6 +319,10 @@ const changeUserPassword = async (req, res) => {
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ message: "Current password and new password are required" });
     }
+    const passwordValidationMessage = getPasswordValidationMessage(newPassword);
+    if (passwordValidationMessage) {
+      return res.status(400).json({ message: passwordValidationMessage });
+    }
 
     const Model = getCurrentPrincipalModel(req);
     if (!Model) {
@@ -239,6 +352,8 @@ const changeUserPassword = async (req, res) => {
 module.exports = {
   registerUser,
   loginUser,
+  forgotPassword,
+  resetPassword,
   getUserProfile,
   updateUserProfile,
   changeUserPassword,

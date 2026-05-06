@@ -216,7 +216,7 @@ export default function LoginPage() {
             <label className="grid gap-2">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[0.95rem] font-semibold text-[#12192f]">Password</span>
-                <a className="font-semibold text-[#ef2c5b] no-underline" href="#forgot">Forgot Password?</a>
+                <Link className="font-semibold text-[#ef2c5b] no-underline" to="/forgot-password">Forgot Password?</Link>
               </div>
               <div className={getFieldClass("flex min-h-[3.625rem] items-center gap-3 rounded-[0.875rem] border border-[#dbe2ee] bg-white px-4", fieldErrors.password)}>
                 <div className="h-[1.375rem] w-[1.375rem] shrink-0 text-[#93a1ba]">

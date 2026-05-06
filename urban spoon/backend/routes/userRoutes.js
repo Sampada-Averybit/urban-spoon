@@ -9,6 +9,12 @@ router.post('/register', userController.registerUser);
 // POST /api/users/login
 router.post('/login', userController.loginUser);
 
+// POST /api/users/forgot-password
+router.post('/forgot-password', userController.forgotPassword);
+
+// POST /api/users/reset-password/:token
+router.post('/reset-password/:token', userController.resetPassword);
+
 // GET /api/users/profile
 router.get('/profile', protect, userController.getUserProfile);
 
