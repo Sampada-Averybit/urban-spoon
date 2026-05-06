@@ -125,11 +125,16 @@ const forgotPassword = async (req, res) => {
   try {
     const normalizedEmail = normalizeEmail(req.body?.email);
     if (!normalizedEmail) {
+      console.warn("[auth] Forgot password rejected: missing email");
       return res.status(400).json({ message: "Email is required" });
     }
 
     const { principal } = await findPrincipalByEmail(normalizedEmail);
     if (!principal) {
+      // Intentionally generic response to avoid account enumeration.
+      console.info("[auth] Forgot password requested for non-existent account", {
+        email: normalizedEmail,
+      });
       return res.status(200).json({ message: "If an account exists, a reset link has been sent." });
     }
 
@@ -142,6 +147,9 @@ const forgotPassword = async (req, res) => {
 
     const frontendBaseUrl = String(process.env.FRONTEND_URL || "").trim();
     if (!frontendBaseUrl) {
+      console.error("[auth] Forgot password failed: FRONTEND_URL not configured", {
+        email: normalizedEmail,
+      });
       return res.status(500).json({ message: "FRONTEND_URL is not configured." });
     }
 
@@ -153,14 +161,28 @@ const forgotPassword = async (req, res) => {
         name: principal.name,
       });
     } catch (mailError) {
+      console.error("[auth] Forgot password email send failed", {
+        email: normalizedEmail,
+        errorMessage: mailError?.message || "Unknown error",
+        errorCode: mailError?.code || null,
+      });
       principal.resetPasswordToken = null;
       principal.resetPasswordExpires = null;
       await principal.save();
       throw mailError;
     }
 
+    console.info("[auth] Forgot password link sent successfully", {
+      email: normalizedEmail,
+    });
     return res.status(200).json({ message: "If an account exists, a reset link has been sent." });
   } catch (error) {
+    console.error("[auth] Forgot password endpoint error", {
+      email: normalizeEmail(req.body?.email),
+      errorMessage: error?.message || "Unknown error",
+      errorCode: error?.code || null,
+      stack: error?.stack || null,
+    });
     return res.status(500).json({ message: error.message || "Server error" });
   }
 };
@@ -171,16 +193,20 @@ const resetPassword = async (req, res) => {
     const { newPassword, confirmPassword } = req.body || {};
 
     if (!rawToken) {
+      console.warn("[auth] Reset password rejected: missing token");
       return res.status(400).json({ message: "Reset token is required." });
     }
     if (!newPassword || !confirmPassword) {
+      console.warn("[auth] Reset password rejected: missing new/confirm password");
       return res.status(400).json({ message: "New password and confirm password are required." });
     }
     const passwordValidationMessage = getPasswordValidationMessage(newPassword);
     if (passwordValidationMessage) {
+      console.warn("[auth] Reset password rejected: new password validation failed");
       return res.status(400).json({ message: passwordValidationMessage });
     }
     if (String(newPassword) !== String(confirmPassword)) {
+      console.warn("[auth] Reset password rejected: password mismatch");
       return res.status(400).json({ message: "Passwords do not match." });
     }
 
@@ -195,6 +221,7 @@ const resetPassword = async (req, res) => {
       principal = await User.findOne(tokenFilter);
     }
     if (!principal) {
+      console.warn("[auth] Reset password rejected: invalid or expired token");
       return res.status(400).json({ message: "Invalid or expired reset token." });
     }
 
@@ -204,8 +231,16 @@ const resetPassword = async (req, res) => {
     principal.resetPasswordExpires = null;
     await principal.save();
 
+    console.info("[auth] Reset password successful", {
+      principalId: String(principal._id),
+    });
     return res.status(200).json({ message: "Password has been reset successfully." });
   } catch (error) {
+    console.error("[auth] Reset password endpoint error", {
+      errorMessage: error?.message || "Unknown error",
+      errorCode: error?.code || null,
+      stack: error?.stack || null,
+    });
     return res.status(500).json({ message: error.message || "Server error" });
   }
 };

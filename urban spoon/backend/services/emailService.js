@@ -29,7 +29,8 @@ async function sendPasswordResetEmail({ to, resetUrl, name }) {
   const safeName = String(name || "there").trim();
   const transporter = createTransporter();
 
-  await transporter.sendMail({
+  try {
+    await transporter.sendMail({
     from,
     to,
     subject: `${appName} Password Reset`,
@@ -53,7 +54,21 @@ If you did not request this, you can ignore this email.
       <p>This link will expire in <strong>15 minutes</strong>.</p>
       <p>If you did not request this, you can ignore this email.</p>
     `,
-  });
+    });
+  } catch (error) {
+    // Log only operational context; never log SMTP password or secrets.
+    console.error("[emailService] Failed to send password reset email", {
+      to,
+      smtpHost: process.env.SMTP_HOST || null,
+      smtpPort: process.env.SMTP_PORT || null,
+      smtpSecure: process.env.SMTP_SECURE || null,
+      errorMessage: error?.message || "Unknown error",
+      errorCode: error?.code || null,
+      errorCommand: error?.command || null,
+      errorResponseCode: error?.responseCode || null,
+    });
+    throw error;
+  }
 }
 
 module.exports = { sendPasswordResetEmail };
