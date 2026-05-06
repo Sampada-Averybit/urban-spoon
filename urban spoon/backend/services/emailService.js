@@ -19,6 +19,11 @@ const createTransporter = () => {
     host,
     port,
     secure,
+    // Render may fail on IPv6 routes for some SMTP endpoints; force IPv4.
+    family: 4,
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000,
     auth: { user, pass },
   });
 };
